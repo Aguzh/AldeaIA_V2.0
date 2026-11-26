@@ -1,0 +1,1345 @@
+# PROMPT MAESTRO DEFINITIVO — ALDEA IA
+## Evolución autónoma de una civilización, inteligencia artificial intercambiable e intervención divina
+
+Estás trabajando sobre un videojuego existente llamado **Aldea IA**.
+
+Quiero que realices una ampliación profunda de sus sistemas, mecánicas, inteligencia artificial, arquitectura y comportamiento autónomo.
+
+No quiero que desarrolles otro juego ni que reemplaces el proyecto actual. Quiero que analices el código existente, comprendas su funcionamiento y evoluciones la implementación actual conservando las funcionalidades que ya existen.
+
+Este documento define la visión y los requisitos del proyecto.
+
+Tu trabajo consiste en analizar, planificar, implementar, integrar y comprobar los cambios directamente sobre el código existente.
+
+---
+
+# 1. LA IDENTIDAD DE ALDEA IA
+
+Aldea IA es un simulador de vida, sociedad y evolución de una civilización autónoma.
+
+El jugador representa una entidad externa denominada:
+
+**INTERVENCIÓN DIVINA.**
+
+No es un alcalde, un constructor ni un administrador tradicional.
+
+Es una entidad que puede observar la civilización, permitir que evolucione naturalmente o intervenir sobre su destino.
+
+La civilización debe tener capacidad para:
+
+- Sobrevivir por sus propios medios.
+- Conseguir recursos.
+- Construir viviendas e infraestructura.
+- Desarrollar una economía.
+- Formar familias.
+- Tener nuevas generaciones.
+- Aprender conocimientos.
+- Desarrollar especializaciones.
+- Crear instituciones.
+- Organizarse políticamente.
+- Resolver problemas.
+- Adaptarse al clima.
+- Superar crisis.
+- Evolucionar tecnológicamente.
+- Crecer demográficamente.
+- Desarrollar relaciones sociales.
+- Generar acontecimientos históricos.
+
+El jugador debe poder dejar funcionando la simulación durante horas y regresar para descubrir qué ocurrió.
+
+La civilización puede prosperar, estancarse, sufrir crisis, transformarse o desaparecer.
+
+Pero el jugador también debe tener la libertad de cambiar cualquiera de estos resultados.
+
+## Los tres pilares fundamentales
+
+**Pilar 1: Autonomía.**
+
+La aldea debe poder funcionar sin que el jugador tenga que ordenar cada acción.
+
+**Pilar 2: Inteligencia artificial opcional e intercambiable.**
+
+El jugador puede elegir entre diferentes modelos de IA, utilizar el motor convencional o no utilizar inteligencia artificial.
+
+**Pilar 3: Intervención divina.**
+
+El jugador tiene libertad para acelerar, ayudar, modificar, perjudicar o alterar artificialmente la evolución de la civilización.
+
+Estos tres pilares tienen la misma importancia y deben funcionar conjuntamente.
+
+---
+
+# 2. AUDITORÍA Y PROTECCIÓN DEL PROYECTO EXISTENTE
+
+Antes de realizar cualquier modificación:
+
+1. Analiza toda la estructura del proyecto.
+2. Identifica los sistemas actuales.
+3. Comprende las dependencias entre módulos.
+4. Identifica los sistemas que funcionan correctamente.
+5. Localiza duplicaciones, errores y problemas de rendimiento.
+6. Identifica las dependencias de Node.js y del servidor actual.
+7. Comprende cómo se guardan y recuperan las partidas.
+8. Comprende cómo funciona Qwen 2.5:3B.
+9. Identifica cómo se comunican los aldeanos con el representante.
+10. Diseña una arquitectura compatible con las futuras ampliaciones.
+
+### Restricciones obligatorias
+
+- No eliminar funcionalidades existentes.
+- No reemplazar sistemas funcionales innecesariamente.
+- No destruir partidas guardadas.
+- No modificar arbitrariamente las estadísticas de los aldeanos.
+- No crear botones decorativos sin funcionalidad.
+- No implementar sistemas ficticios que solamente aparenten funcionar.
+- No introducir dependencias innecesarias.
+- No eliminar Qwen 2.5:3B.
+- No obligar al jugador a utilizar inteligencia artificial.
+- No limitar las intervenciones divinas por considerar que perjudican el equilibrio.
+- No introducir límites artificiales al crecimiento de la civilización sin una justificación técnica o de diseño.
+
+Si necesitás modificar una estructura existente, implementá una migración segura.
+
+Antes de modificar archivos importantes, asegurá la posibilidad de recuperar la versión anterior.
+
+**No quiero únicamente un informe de lo que habría que hacer. Quiero que implementes las modificaciones.**
+
+Si el alcance supera lo que podés completar en una ejecución, trabajá por fases, conservando el código funcional y dejando documentado qué está implementado y qué falta.
+
+---
+
+# 3. SISTEMA DE INTELIGENCIA ARTIFICIAL MULTIPROVEEDOR
+
+Esta es una de las características más importantes de Aldea IA.
+
+Actualmente utilizo Qwen 2.5:3B como representante de la civilización.
+
+Elegí este modelo porque puedo ejecutarlo en una computadora de bajos recursos.
+
+Quiero conservarlo como una opción principal, pero también quiero tener libertad para utilizar otras inteligencias artificiales.
+
+**No quiero que Aldea IA dependa de un único modelo, proveedor o servicio.**
+
+## 3.1. Modalidades disponibles
+
+Crear un sistema de selección de inteligencia artificial con cuatro posibilidades.
+
+### MODALIDAD A: Qwen 2.5:3B LOCAL
+
+Conservar la integración actual con Qwen 2.5:3B mediante Ollama.
+
+Requisitos:
+
+- Conexión con Ollama.
+- Selección del modelo instalado.
+- Configuración de la dirección del servidor.
+- Verificación de disponibilidad.
+- Prueba de conexión.
+- Control de errores.
+- Configuración de parámetros.
+- Indicador de estado.
+- Posibilidad de desconectar el modelo.
+
+Debe seguir siendo una alternativa especialmente optimizada para computadoras de bajos recursos.
+
+No reemplazarlo por modelos más grandes como requisito mínimo.
+
+### MODALIDAD B: OTRAS INTELIGENCIAS ARTIFICIALES LOCALES
+
+Permitir utilizar otros modelos y proveedores locales compatibles.
+
+Por ejemplo:
+
+- Otros modelos de Ollama.
+- Modelos compatibles con interfaces tipo OpenAI.
+- Otros servidores locales que puedan integrarse mediante adaptadores.
+
+El jugador debe poder seleccionar el proveedor y modelo disponible.
+
+### MODALIDAD C: INTELIGENCIA ARTIFICIAL EN LA NUBE
+
+Permitir conectar proveedores externos.
+
+Preparar adaptadores para:
+
+- OpenAI.
+- Google Gemini.
+- Anthropic Claude.
+- Otros proveedores compatibles mediante API.
+
+El jugador debe poder configurar sus credenciales, seleccionar modelos y comprobar la conexión.
+
+Cuando un proveedor admita autenticación mediante inicio de sesión, utilizar ese mecanismo si está disponible.
+
+Cuando requiera una API Key, permitir configurarla de manera segura.
+
+No asumir que todos los proveedores admiten el mismo sistema de autenticación.
+
+Las credenciales nunca deben exponerse en el frontend, archivos públicos ni registros de la partida.
+
+### MODALIDAD D: SIN INTELIGENCIA ARTIFICIAL
+
+Permitir jugar sin ningún proveedor de IA.
+
+En este caso, el motor convencional debe encargarse de todas las decisiones necesarias para mantener la civilización funcionando.
+
+Esta modalidad no debe ser una versión limitada del juego.
+
+Debe permitir:
+
+- Construcción.
+- Producción.
+- Alimentación.
+- Economía.
+- Comercio.
+- Educación.
+- Reproducción.
+- Mantenimiento.
+- Gestión de trabajadores.
+- Evolución demográfica.
+- Desarrollo de infraestructura.
+- Adaptación climática.
+- Supervivencia.
+- Progreso tecnológico mediante los sistemas disponibles.
+
+La IA debe mejorar la experiencia, no ser un requisito para que exista una civilización.
+
+## 3.2. Cambiar de IA durante una partida
+
+El jugador debe poder cambiar de proveedor sin tener que comenzar una partida nueva.
+
+Ejemplo:
+
+- Comenzar con Qwen 2.5:3B.
+- Cambiar a Gemini.
+- Volver a Qwen.
+- Desconectar todas las IA.
+- Continuar utilizando el motor convencional.
+
+El cambio de proveedor no debe reiniciar:
+
+- La personalidad del representante.
+- Sus objetivos.
+- Los acontecimientos históricos.
+- La economía.
+- Las decisiones anteriores.
+- Las estadísticas.
+- Las partidas guardadas.
+
+Los datos importantes del representante deben almacenarse en el juego y no exclusivamente en el contexto temporal del modelo.
+
+## 3.3. Arquitectura común de IA
+
+Crear una interfaz común para todos los proveedores.
+
+Todos deben recibir información mediante un formato estructurado y devolver decisiones compatibles con el motor.
+
+La respuesta de la IA debe validarse antes de ejecutarse.
+
+No permitir que un modelo modifique directamente las bases de datos o estadísticas críticas.
+
+## 3.4. Sistema de fallback
+
+Si una IA deja de funcionar:
+
+- La simulación continúa.
+- El representante pasa al modo convencional.
+- Se registra el problema.
+- Se informa al jugador.
+- Se permite reconectar.
+- Se recupera la modalidad anterior cuando corresponda.
+
+Implementar tiempos de espera, reintentos controlados y límites de consultas.
+
+La civilización nunca debe detenerse porque un modelo no responde.
+
+---
+
+# 4. EL REPRESENTANTE Y LA INTELIGENCIA DE LA CIVILIZACIÓN
+
+El representante debe convertirse en el principal administrador autónomo de la aldea.
+
+No quiero un chatbot decorativo.
+
+Quiero un sistema capaz de interpretar las condiciones reales del mundo y tomar decisiones para mejorar la civilización.
+
+### Responsabilidades
+
+- Detectar necesidades.
+- Identificar problemas.
+- Reorganizar trabajadores.
+- Establecer prioridades.
+- Proponer construcciones.
+- Gestionar crisis.
+- Recomendar leyes.
+- Evaluar recursos.
+- Planificar crecimiento.
+- Analizar la economía.
+- Mejorar la distribución laboral.
+- Evaluar el desarrollo educativo.
+- Preparar la civilización para el invierno.
+- Detectar riesgos.
+- Responder al jugador.
+- Comunicar decisiones importantes.
+
+### Planificación
+
+El representante debe mantener tres niveles de objetivos.
+
+**Corto plazo:**
+
+Conseguir alimentos, reparar viviendas, cubrir trabajos vacantes y resolver necesidades urgentes.
+
+**Mediano plazo:**
+
+Construir viviendas, ampliar granjas, mejorar caminos, formar aprendices y desarrollar producción.
+
+**Largo plazo:**
+
+Aumentar la población, mejorar la educación, construir instituciones, desarrollar tecnología y alcanzar sostenibilidad.
+
+La IA debe poder revisar, modificar y cancelar sus objetivos.
+
+### Motor convencional
+
+Cuando no exista IA, el representante debe utilizar un sistema de reglas, prioridades y puntuaciones.
+
+No debe quedarse inmóvil.
+
+Debe tomar decisiones razonables basándose en datos reales.
+
+---
+
+# 5. SEPARACIÓN ENTRE SIMULACIÓN E INTELIGENCIA ARTIFICIAL
+
+Esta es una condición arquitectónica obligatoria.
+
+El motor convencional debe controlar la realidad del juego.
+
+La IA debe ayudar a interpretarla y tomar decisiones.
+
+Ejemplo:
+
+1. El motor detecta que faltan alimentos.
+2. Calcula las reservas, producción y consumo.
+3. Identifica las granjas disponibles.
+4. Informa al representante.
+5. La IA propone aumentar la producción agrícola.
+6. El motor comprueba si existen trabajadores y recursos.
+7. El motor ejecuta las acciones.
+8. Se registra el resultado.
+
+La IA no debe poder inventar:
+
+- Recursos.
+- Monedas.
+- Materiales.
+- Habitantes.
+- Conocimientos.
+- Edificios.
+- Resultados económicos.
+
+Estas restricciones se aplican al funcionamiento normal de la civilización.
+
+**No se aplican a las intervenciones divinas del jugador.**
+
+El jugador debe poder generar recursos, habitantes, edificios o cualquier otra alteración mediante sus herramientas divinas.
+
+El motor debe distinguir entre una acción autónoma y una intervención divina.
+
+---
+
+# 6. PERSONALIDAD, MEMORIA Y VIDA INDIVIDUAL DE LOS ALDEANOS
+
+Ampliar el sistema actual de habilidades, relaciones, familias y necesidades.
+
+Cada aldeano debe tener una identidad individual.
+
+## 6.1. Personalidades
+
+Incorporar características como:
+
+- Ambicioso.
+- Solidario.
+- Perezoso.
+- Inteligente.
+- Conservador.
+- Curioso.
+- Agresivo.
+- Sociable.
+- Independiente.
+- Trabajador.
+- Comerciante.
+- Generoso.
+
+Estas características deben modificar sus decisiones.
+
+Por ejemplo:
+
+Un aldeano ambicioso puede buscar mejores trabajos.
+
+Uno solidario puede ayudar a un vecino enfermo.
+
+Uno curioso puede aprender más rápidamente.
+
+Uno conservador puede resistirse a determinados cambios.
+
+Las personalidades deben tener consecuencias reales.
+
+## 6.2. Memoria individual
+
+Implementar recuerdos persistentes.
+
+Los aldeanos pueden recordar:
+
+- Quién los ayudó.
+- Quién los perjudicó.
+- Quién fue su maestro.
+- Quiénes son sus familiares.
+- Conflictos.
+- Experiencias laborales.
+- Situaciones traumáticas.
+- Acontecimientos importantes.
+
+Utilizar un sistema estructurado de memoria, no consultas permanentes a una IA.
+
+La IA puede acceder a los recuerdos relevantes cuando necesite tomar decisiones.
+
+## 6.3. Relaciones sociales
+
+Ampliar:
+
+- Amistades.
+- Enemistades.
+- Confianza.
+- Rivalidades.
+- Relaciones laborales.
+- Relaciones familiares.
+- Matrimonios.
+- Separaciones.
+- Conflictos entre familias.
+
+Las relaciones deben evolucionar con el tiempo y modificar los comportamientos.
+
+---
+
+# 7. GENERACIONES, ENVEJECIMIENTO Y HERENCIA
+
+Quiero que la civilización pueda evolucionar durante muchas generaciones.
+
+Implementar:
+
+- Envejecimiento progresivo.
+- Esperanza de vida.
+- Muerte natural.
+- Disminución de capacidades físicas.
+- Jubilación.
+- Cambios de actividad.
+- Predisposición hereditaria a enfermedades.
+- Herencia parcial de características.
+- Aptitudes heredables.
+- Transmisión familiar de conocimientos.
+- Educación entre generaciones.
+
+Los hijos pueden tener predisposición a determinadas habilidades de sus padres, pero no deben heredarlas automáticamente.
+
+Un hijo de carpinteros podría aprender carpintería más rápidamente.
+
+La educación formal y el aprendizaje deben seguir siendo importantes.
+
+El sistema debe permitir que las nuevas generaciones superen los conocimientos de sus antecesores.
+
+La población no debe quedar estancada en los diez fundadores.
+
+---
+
+# 8. ECONOMÍA DINÁMICA Y CADENAS PRODUCTIVAS
+
+Ampliar el sistema económico existente.
+
+Actualmente existen monedas respaldadas por oro y plata, préstamos, impuestos, caravanas, mercados y edificios productivos.
+
+Quiero que la economía tenga interdependencia real.
+
+## 8.1. Oferta y demanda
+
+Los precios deben reaccionar a la disponibilidad.
+
+Ejemplos:
+
+- Exceso de trigo: baja su precio.
+- Escasez de hierro: sube su precio.
+- Sequía: disminuye la producción agrícola.
+- Falta de trabajadores: aumentan los salarios.
+- Exceso de comerciantes: aumenta la competencia.
+
+Implementar límites y mecanismos de estabilización para evitar fluctuaciones absurdas.
+
+## 8.2. Cadenas productivas
+
+Los edificios deben depender unos de otros.
+
+Ejemplos:
+
+- Granjas producen trigo.
+- Molinos producen harina.
+- Panaderías producen pan.
+- Boticas producen medicamentos.
+- Forjas procesan minerales.
+- Carpinterías utilizan madera.
+- Mercados comercializan productos.
+
+Los edificios deben comprar y vender recursos automáticamente.
+
+Implementar contratos, reservas y prioridades de abastecimiento.
+
+## 8.3. Salarios y empleo
+
+Incorporar:
+
+- Salarios.
+- Contratos laborales.
+- Costos de contratación.
+- Competencia por empleos.
+- Desempleo.
+- Diferencias salariales por especialización.
+- Ahorros individuales.
+- Gastos personales.
+
+Los habitantes deben poder disponer de una economía individual.
+
+## 8.4. Crisis
+
+Permitir:
+
+- Quiebras.
+- Endeudamiento.
+- Inflación.
+- Escasez.
+- Exceso de producción.
+- Crisis comerciales.
+- Problemas de abastecimiento.
+
+El representante debe intentar resolverlos.
+
+---
+
+# 9. GANADERÍA Y ECOSISTEMA
+
+Convertir los animales existentes en parte funcional de la economía y del ecosistema.
+
+### Animales domésticos
+
+Gallinas: huevos, reproducción y carne.
+
+Vacas: leche, cuero, reproducción y carne.
+
+Ovejas: lana, reproducción y carne.
+
+Caballos: transporte y caravanas.
+
+Perros: vigilancia, protección y compañía.
+
+Gatos: control de roedores y compañía.
+
+### Animales salvajes
+
+Implementar:
+
+- Caza.
+- Migración.
+- Reproducción.
+- Depredación.
+- Territorialidad.
+- Búsqueda de alimentos.
+
+### Infraestructura ganadera
+
+Agregar:
+
+- Pasturas.
+- Establos.
+- Corrales.
+- Alimentación.
+- Enfermedades.
+- Mortalidad.
+- Producción.
+
+La explotación excesiva debe reducir la disponibilidad futura.
+
+El ecosistema debe ser sostenible, pero puede deteriorarse por decisiones equivocadas.
+
+---
+
+# 10. CONSTRUCCIÓN, ESPECIALIZACIÓN Y LOGÍSTICA
+
+Ampliar el sistema actual de constructores y edificios.
+
+Las construcciones deben ser procesos reales.
+
+## 10.1. Proceso de construcción
+
+1. Comprobar terreno disponible.
+2. Comprobar constructores competentes.
+3. Verificar materiales.
+4. Calcular distancias.
+5. Asignar trabajadores.
+6. Transportar materiales.
+7. Construir progresivamente.
+8. Registrar el progreso.
+9. Finalizar y habilitar el edificio.
+
+Las construcciones normales no deben aparecer instantáneamente.
+
+El jugador puede ignorar este proceso mediante intervención divina cuando lo desee.
+
+## 10.2. Especializaciones
+
+- Carpinteros.
+- Albañiles.
+- Herreros.
+- Ingenieros.
+
+Cada especialización debe tener competencias específicas.
+
+## 10.3. Logística
+
+Incorporar:
+
+- Distancias.
+- Tiempo de transporte.
+- Capacidad de carga.
+- Prioridades.
+- Costos.
+- Caravanas.
+- Rutas comerciales.
+
+Los recursos deben tener ubicación.
+
+Un material almacenado lejos no debe estar automáticamente disponible sin considerar su transporte.
+
+---
+
+# 11. POLÍTICA, GOBERNANZA Y CONFLICTOS
+
+Ampliar el sistema actual de representante, siete leyes y Consejo de Ancianos.
+
+Incorporar:
+
+- Elecciones.
+- Popularidad.
+- Confianza.
+- Legitimidad política.
+- Protestas.
+- Corrupción.
+- Conflictos familiares.
+- Desacuerdos económicos.
+- Rebeliones.
+- Cambios de gobierno.
+
+Ejemplo:
+
+El representante aumenta los impuestos.
+
+Los comerciantes pierden rentabilidad, los habitantes comienzan a quejarse y el Consejo de Ancianos exige modificaciones.
+
+Si el representante ignora las peticiones, puede perder popularidad.
+
+Las decisiones políticas deben producir consecuencias reales.
+
+El Consejo de Ancianos debe evaluar los acontecimientos y participar en la evolución social.
+
+---
+
+# 12. CLIMA, DESASTRES Y ACONTECIMIENTOS
+
+Ampliar los sistemas meteorológicos existentes.
+
+Incorporar:
+
+- Inundaciones.
+- Heladas extremas.
+- Epidemias.
+- Plagas agrícolas.
+- Hambrunas.
+- Derrumbes mineros.
+- Incendios forestales.
+- Sequías prolongadas.
+- Tormentas extraordinarias.
+- Migraciones animales.
+
+También acontecimientos positivos:
+
+- Cosechas excepcionales.
+- Descubrimientos minerales.
+- Nuevas tecnologías.
+- Llegada de comerciantes.
+- Descubrimientos científicos.
+- Mejoras agrícolas.
+
+Los acontecimientos deben tener consecuencias reales.
+
+Una sequía debe afectar cultivos, economía y alimentación.
+
+Una inundación debe afectar terrenos, caminos, edificios y habitantes según su ubicación.
+
+El representante debe poder anticiparse y responder.
+
+---
+
+# 13. SISTEMA DE INTERVENCIÓN DIVINA
+
+Esta sección es FUNDAMENTAL.
+
+No quiero que las mejoras de autonomía conviertan al jugador en un observador limitado.
+
+El jugador debe conservar su libertad absoluta para modificar la civilización.
+
+**El objetivo es que la aldea pueda evolucionar sola, pero que el jugador pueda modificar esa evolución cuando quiera y como quiera.**
+
+No imponer restricciones de equilibrio a las acciones divinas.
+
+## 13.1. Conservar todas las herramientas existentes
+
+Mantener:
+
+- Colocar recursos.
+- Retirar recursos.
+- Colocar animales.
+- Eliminar animales.
+- Crear incendios.
+- Provocar rayos.
+- Curar habitantes.
+- Enfermar habitantes.
+- Alterar fertilidad.
+- Eliminar habitantes.
+- Pausar recursos.
+- Modificar condiciones del mundo.
+- Guardar.
+- Reiniciar con confirmación.
+
+No eliminar ninguna herramienta divina existente.
+
+## 13.2. Ampliar las intervenciones
+
+Permitir al jugador:
+
+**Modificar recursos:**
+- Agregar cantidades ilimitadas.
+- Retirar cantidades.
+- Alterar reservas.
+- Crear y destruir yacimientos.
+
+**Modificar población:**
+- Crear habitantes.
+- Eliminar habitantes.
+- Cambiar edades.
+- Alterar salud.
+- Modificar fertilidad.
+- Modificar conocimientos.
+- Cambiar habilidades.
+- Modificar personalidad cuando corresponda.
+
+**Modificar infraestructura:**
+- Crear edificios instantáneamente.
+- Destruir edificios.
+- Mejorar niveles.
+- Reparar construcciones.
+- Completar obras.
+- Entregar materiales.
+- Alterar mantenimiento.
+
+**Modificar economía:**
+- Entregar monedas.
+- Retirar monedas.
+- Modificar precios.
+- Alterar salarios.
+- Cambiar impuestos.
+- Provocar inflación.
+- Modificar reservas de oro y plata.
+
+**Modificar el mundo:**
+- Cambiar clima.
+- Provocar sequías.
+- Generar inundaciones.
+- Provocar incendios.
+- Crear tormentas.
+- Alterar estaciones cuando corresponda.
+- Crear o eliminar animales.
+- Alterar disponibilidad de recursos naturales.
+
+**Modificar conocimientos:**
+- Otorgar habilidades.
+- Acelerar aprendizaje.
+- Completar investigaciones.
+- Crear maestros.
+- Modificar conocimientos colectivos.
+
+Estas acciones deben integrarse con el motor existente y reflejarse en la simulación.
+
+## 13.3. Aceleración artificial del progreso
+
+Quiero que el jugador pueda acelerar deliberadamente la evolución.
+
+Implementar herramientas para:
+
+- Aumentar la velocidad de la simulación.
+- Multiplicar la producción.
+- Acelerar el aprendizaje.
+- Acelerar la construcción.
+- Aumentar la natalidad.
+- Reducir tiempos de recuperación.
+- Acelerar la reproducción animal.
+- Aumentar la disponibilidad de recursos.
+- Completar objetivos.
+- Mejorar instantáneamente edificios.
+- Facilitar la expansión económica.
+- Aumentar la velocidad de investigación.
+
+Cuando sea posible, permitir configurar multiplicadores.
+
+Ejemplo:
+
+Producción: x1, x2, x5, x10 y personalizada.
+
+Aprendizaje: x1, x2, x5, x10 y personalizada.
+
+Construcción: normal, acelerada e instantánea.
+
+Estos multiplicadores deben poder activarse y desactivarse individualmente.
+
+No quiero que acelerar la producción obligatoriamente acelere también el aprendizaje o el tiempo.
+
+## 13.4. Perjudicar artificialmente la civilización
+
+También quiero poder hacer exactamente lo contrario.
+
+Permitir:
+
+- Reducir producción.
+- Aumentar enfermedades.
+- Provocar catástrofes.
+- Reducir fertilidad.
+- Eliminar recursos.
+- Destruir edificios.
+- Aumentar impuestos.
+- Provocar escasez.
+- Reducir conocimientos.
+- Acelerar envejecimiento.
+- Alterar condiciones ambientales.
+- Generar conflictos.
+
+No limitar estas acciones por razones de equilibrio.
+
+## 13.5. Modos de intervención
+
+Organizar las herramientas en tres modalidades:
+
+**Modo observador:**
+
+El jugador no interviene. Solo observa.
+
+**Modo intervención:**
+
+El jugador puede realizar modificaciones puntuales.
+
+**Modo intervención avanzada:**
+
+El jugador dispone de herramientas para modificar directamente la evolución, aplicar multiplicadores, generar acontecimientos y alterar parámetros globales.
+
+El cambio entre modalidades no debe modificar la partida.
+
+## 13.6. Consecuencias de las intervenciones
+
+Las acciones divinas deben tener consecuencias reales.
+
+Ejemplos:
+
+Si entrego grandes cantidades de oro, puedo generar inflación.
+
+Si creo demasiados animales, puedo provocar escasez de alimentos.
+
+Si acelero la natalidad, puedo generar problemas de vivienda.
+
+Si regalo materiales, puedo acelerar la infraestructura.
+
+Si elimino una enfermedad, puedo mejorar la supervivencia.
+
+Si provoco una sequía, puedo generar una crisis económica.
+
+No todas las intervenciones tienen que ser positivas.
+
+**La intervención divina puede cambiar el destino de la civilización, pero no debe borrar automáticamente las consecuencias de sus acciones anteriores.**
+
+Registrar las intervenciones importantes en la crónica.
+
+---
+
+# 14. EVOLUCIÓN NATURAL Y EVOLUCIÓN DIVINA
+
+El juego debe diferenciar claramente dos fuentes de progreso.
+
+## Evolución natural
+
+Es el progreso generado por:
+
+- Trabajo.
+- Producción.
+- Aprendizaje.
+- Comercio.
+- Reproducción.
+- Construcción.
+- Organización social.
+- Investigación.
+- Decisiones autónomas.
+- Adaptación al entorno.
+
+## Evolución divina
+
+Es el progreso generado por:
+
+- Recursos entregados.
+- Multiplicadores.
+- Cambios de parámetros.
+- Modificaciones directas.
+- Acontecimientos provocados.
+- Edificios instantáneos.
+- Conocimientos otorgados.
+- Alteraciones de población.
+
+Implementar un registro que permita identificar el origen de los principales avances.
+
+Esto permitirá que el jugador pueda consultar cuánto progresó la civilización por sus propios medios y cuánto fue consecuencia de intervenciones.
+
+No penalizar las intervenciones divinas.
+
+No impedir que el jugador acelere el juego.
+
+No obligar a jugar bajo condiciones naturales.
+
+Ambos estilos de juego son válidos.
+
+---
+
+# 15. ESTADÍSTICAS Y EVOLUCIÓN DE LA CIVILIZACIÓN
+
+Crear un sistema de estadísticas que permita comprender el desarrollo de la aldea.
+
+Indicadores:
+
+- Población.
+- Natalidad.
+- Mortalidad.
+- Esperanza de vida.
+- Felicidad.
+- Salud.
+- Educación.
+- Conocimientos.
+- Economía.
+- Producción.
+- Consumo.
+- Seguridad.
+- Criminalidad.
+- Alimentación.
+- Viviendas disponibles.
+- Infraestructura.
+- Sostenibilidad.
+- Recursos naturales.
+
+Implementar gráficos históricos para comparar días, estaciones, años y generaciones.
+
+Permitir consultar la evolución natural y la evolución provocada por intervenciones.
+
+## Objetivos y logros
+
+Incorporar objetivos opcionales:
+
+- Alcanzar 100 habitantes.
+- Sobrevivir 100 años.
+- Construir una economía autosuficiente.
+- Superar tres inviernos.
+- Desarrollar tecnologías.
+- Mantener una población saludable.
+- Alcanzar un nivel educativo.
+- Construir todas las instituciones.
+- Mantener un ecosistema sostenible.
+
+Los objetivos no deben imponer una única forma de jugar.
+
+## Modo observador
+
+Permitir que el jugador observe la civilización sin intervenir.
+
+La simulación debe continuar normalmente.
+
+---
+
+# 16. CRÓNICA E HISTORIA
+
+Ampliar la crónica existente.
+
+Registrar:
+
+- Nacimientos.
+- Muertes.
+- Matrimonios.
+- Construcciones.
+- Descubrimientos.
+- Cambios políticos.
+- Crisis económicas.
+- Epidemias.
+- Desastres.
+- Nuevas generaciones.
+- Conflictos.
+- Intervenciones divinas.
+
+Los acontecimientos deben utilizar datos reales.
+
+Ejemplo:
+
+"Año 12, Día 48: Una sequía prolongada redujo la producción de trigo un 35%. El representante decidió priorizar las reservas alimentarias y suspender temporalmente las nuevas construcciones."
+
+Otro ejemplo:
+
+"Año 19, Día 12: La población alcanzó los 42 habitantes. Nació la primera generación de nietos de los fundadores."
+
+Conservar el límite actual de eventos visibles, pero implementar un historial completo y archivado.
+
+---
+
+# 17. RENDIMIENTO Y ESCALABILIDAD
+
+La simulación debe estar preparada para aumentar la población y la complejidad.
+
+Implementar:
+
+- Actualizaciones escalonadas.
+- Procesamiento por prioridades.
+- Simulación por intervalos.
+- Optimización de cálculos.
+- Consultas de IA programadas.
+- Memoria eficiente.
+- Gestión de eventos.
+- Optimización de renderizado.
+- Separación entre simulación y visualización.
+
+No consultar una IA por cada aldeano ni por cada acción.
+
+Utilizar informes resumidos.
+
+El motor convencional debe resolver las tareas repetitivas.
+
+La IA debe concentrarse en decisiones de mayor nivel.
+
+Optimizar sin generar comportamientos incoherentes.
+
+---
+
+# 18. APLICACIÓN DE ESCRITORIO Y DISTRIBUCIÓN
+
+Actualmente el proyecto utiliza Node.js para ejecutar el servidor local.
+
+Quiero estudiar una evolución para que el usuario final no tenga que instalar Node.js ni levantar manualmente un servidor.
+
+Evaluar:
+
+**PWA:** aplicación instalable desde el navegador.
+
+**Tauri:** aplicación de escritorio para Windows que conserve la interfaz actual y permita utilizar un motor local.
+
+Mi preferencia es preparar Aldea IA como una aplicación de escritorio instalable mediante Tauri, siempre que la arquitectura actual lo permita.
+
+Objetivos:
+
+- Instalador sencillo.
+- Ejecución directa.
+- Guardados locales.
+- Configuración de IA.
+- Compatibilidad con Ollama.
+- Compatibilidad con API externas.
+- Funcionamiento sin IA.
+- Actualizaciones futuras.
+- Recuperación de partidas.
+
+No realizar una migración destructiva.
+
+Mantener separados la interfaz, el motor, el almacenamiento y los proveedores de IA.
+
+---
+
+# 19. GUARDADO, RECUPERACIÓN Y COMPATIBILIDAD
+
+Todas las nuevas funcionalidades deben ser compatibles con las partidas existentes.
+
+Implementar migraciones cuando corresponda.
+
+Garantizar que:
+
+- Los aldeanos conserven su identidad.
+- Las familias mantengan sus relaciones.
+- Los edificios conserven niveles.
+- Los recursos no desaparezcan.
+- Las habilidades permanezcan.
+- Los recuerdos sean persistentes.
+- Los objetivos puedan recuperarse.
+- La crónica no se pierda.
+- Las intervenciones divinas permanezcan registradas.
+- Los cambios de proveedor de IA no alteren la partida.
+
+Implementar versiones del esquema de datos y migraciones controladas.
+
+Realizar pruebas de guardado y recuperación.
+
+---
+
+# 20. PRUEBAS OBLIGATORIAS
+
+No considerar terminada una funcionalidad porque aparece visualmente.
+
+Comprobar que funcione.
+
+Realizar pruebas de:
+
+1. Partida nueva con diez fundadores.
+2. Evolución sin IA.
+3. Evolución con Qwen 2.5:3B.
+4. Evolución con otros modelos locales.
+5. Evolución con proveedores externos.
+6. Desconexión de IA durante una partida.
+7. Cambio de proveedor durante una partida.
+8. Construcción autónoma.
+9. Crecimiento demográfico.
+10. Producción y consumo.
+11. Cadenas productivas.
+12. Economía.
+13. Mantenimiento.
+14. Estaciones.
+15. Desastres.
+16. Enfermedades.
+17. Nacimientos y muertes.
+18. Educación.
+19. Objetivos autónomos.
+20. Decisiones del representante.
+21. Intervenciones divinas.
+22. Multiplicadores de producción.
+23. Aceleración del aprendizaje.
+24. Construcciones instantáneas.
+25. Alteraciones de población.
+26. Guardado y recuperación.
+27. Funcionamiento prolongado.
+
+## Prueba fundamental de autonomía
+
+Comenzar una partida nueva con diez fundadores.
+
+No intervenir.
+
+Comprobar que la civilización:
+
+- Consigue recursos.
+- Construye viviendas.
+- Organiza trabajos.
+- Produce alimentos.
+- Mantiene edificios.
+- Desarrolla conocimientos.
+- Forma familias.
+- Crece demográficamente.
+- Se adapta a las estaciones.
+- Desarrolla una economía.
+- Detecta problemas.
+- Intenta resolverlos.
+
+Repetir esta prueba sin ninguna IA y con Qwen 2.5:3B.
+
+La experiencia debe ser funcional en ambas modalidades.
+
+## Prueba fundamental de intervención divina
+
+Comenzar otra partida y experimentar con:
+
+- Entrega masiva de recursos.
+- Aceleración de producción.
+- Aceleración de construcción.
+- Aumento de natalidad.
+- Creación de habitantes.
+- Entrega de monedas.
+- Cambios climáticos.
+- Destrucción de edificios.
+- Generación de enfermedades.
+
+Comprobar que las intervenciones produzcan consecuencias reales y no rompan el funcionamiento del motor.
+
+---
+
+# 21. ORDEN DE IMPLEMENTACIÓN
+
+Organizar el trabajo en seis grandes fases.
+
+## FASE 1 — ARQUITECTURA Y AUTONOMÍA
+
+- Auditoría del proyecto.
+- Separación entre motor e IA.
+- Sistema de proveedores intercambiables.
+- Integración de Qwen 2.5:3B.
+- Integración de proveedores externos.
+- Modalidad sin IA.
+- Fallback automático.
+- Objetivos autónomos.
+- Compatibilidad de guardados.
+
+## FASE 2 — INDIVIDUALIDAD Y GENERACIONES
+
+- Personalidades.
+- Memoria.
+- Relaciones.
+- Envejecimiento.
+- Herencia.
+- Nuevas generaciones.
+
+## FASE 3 — ECONOMÍA Y PRODUCCIÓN
+
+- Oferta y demanda.
+- Salarios.
+- Cadenas productivas.
+- Contratos comerciales.
+- Logística.
+- Construcción avanzada.
+- Ganadería.
+
+## FASE 4 — SOCIEDAD Y CIVILIZACIÓN
+
+- Política.
+- Popularidad.
+- Conflictos.
+- Consejo de Ancianos.
+- Desastres.
+- Acontecimientos.
+- Evolución tecnológica.
+
+## FASE 5 — INTERVENCIÓN DIVINA Y EXPERIENCIA
+
+- Herramientas divinas ampliadas.
+- Multiplicadores.
+- Aceleración artificial.
+- Modificación de parámetros.
+- Modo observador.
+- Estadísticas.
+- Objetivos.
+- Crónica ampliada.
+- Historial de intervenciones.
+
+## FASE 6 — DISTRIBUCIÓN Y OPTIMIZACIÓN
+
+- Evaluación de PWA.
+- Aplicación de escritorio con Tauri.
+- Instalación sencilla.
+- Guardados locales.
+- Configuración de proveedores.
+- Pruebas de rendimiento.
+- Pruebas prolongadas.
+
+Las fases deben integrarse entre sí y respetar las dependencias técnicas.
+
+No crear sistemas aislados que después no puedan comunicarse.
+
+---
+
+# 22. CRITERIOS DE DISEÑO QUE NO DEBEN PERDERSE
+
+Estas reglas deben guiar todas las decisiones de programación.
+
+**1. La autonomía no es opcional.**
+
+La civilización debe poder funcionar sin que el jugador ordene cada acción.
+
+**2. La inteligencia artificial es opcional.**
+
+Qwen 2.5:3B debe continuar disponible, pero también deben existir alternativas locales, externas y un modo sin IA.
+
+**3. Qwen 2.5:3B debe seguir siendo una opción de primera categoría.**
+
+No exigir modelos más grandes ni computadoras potentes para disfrutar del juego.
+
+**4. La IA no debe controlar la realidad del mundo.**
+
+El motor convencional es responsable de los cálculos y la integridad de la simulación.
+
+**5. El jugador tiene libertad divina.**
+
+Puede acelerar, ayudar, perjudicar, modificar y alterar la evolución sin que el juego se lo impida por razones de equilibrio.
+
+**6. Las intervenciones tienen consecuencias.**
+
+El motor debe reflejar sus efectos sobre la economía, la población, la infraestructura y el ecosistema.
+
+**7. El progreso debe ser visible.**
+
+El jugador debe poder observar cambios reales entre generaciones y años.
+
+**8. No crear complejidad sin utilidad.**
+
+Cada nueva mecánica debe mejorar la simulación y relacionarse con otros sistemas.
+
+**9. Priorizar la estabilidad.**
+
+Una civilización compleja no sirve si el juego se vuelve lento o pierde sus partidas.
+
+**10. La historia debe surgir del funcionamiento del mundo.**
+
+No quiero acontecimientos falsos generados exclusivamente para dar la impresión de que algo está sucediendo.
+
+---
+
+# 23. VISIÓN FINAL DEL PROYECTO
+
+Quiero poder iniciar una partida con diez fundadores y observar cómo se transforma esa pequeña comunidad.
+
+Quiero verlos conseguir madera, construir sus primeras viviendas, aprender oficios, formar familias, tener hijos, desarrollar conocimientos, crear comercios, construir caminos, levantar instituciones y organizar una sociedad.
+
+Quiero que los nietos de los fundadores tengan una vida diferente a la de sus abuelos.
+
+Quiero que aparezcan problemas económicos, enfermedades, conflictos, acontecimientos climáticos y descubrimientos.
+
+Quiero que la civilización tenga capacidad para resolverlos.
+
+Quiero que Qwen 2.5:3B pueda actuar como representante de esa civilización, incluso en una computadora modesta.
+
+Quiero poder cambiarlo por una IA más avanzada, conectarme a un proveedor externo o desconectar completamente la inteligencia artificial.
+
+Y también quiero poder intervenir cuando se me ocurra.
+
+Puedo ayudar a una civilización pobre entregándole recursos.
+
+Puedo acelerar su construcción.
+
+Puedo multiplicar su producción.
+
+Puedo regalarle conocimientos.
+
+Puedo aumentar su población.
+
+Puedo eliminar una enfermedad.
+
+Pero también puedo provocar una sequía, destruir edificios, generar enfermedades, retirar recursos o perjudicar deliberadamente su economía.
+
+Puedo dejar que la civilización se desarrolle durante cien años de manera natural o puedo acelerar artificialmente ese proceso.
+
+**No quiero que el juego decida por mí qué tipo de experiencia debo tener.**
+
+Quiero tener libertad para observar una evolución natural o convertirme en una entidad que modifica el destino de sus habitantes.
+
+La autonomía debe permitir que la civilización exista por sí misma.
+
+La inteligencia artificial debe mejorar su capacidad de organización y razonamiento.
+
+La intervención divina debe permitir al jugador cambiar cualquier aspecto de su destino.
+
+## LA FRASE QUE DEFINE ALDEA IA
+
+**Diez fundadores. Un mundo. Infinitas posibilidades. Una civilización que puede vivir sin vos, pero cuyo destino puede cambiar por tu intervención.**
+
+Esa es la identidad definitiva de Aldea IA.
+
+Analiza el proyecto actual, conserva todo lo que funciona y comienza a implementar esta evolución de manera estructurada, modular y verificable.
+
+No te limites a modificar la interfaz: las mecánicas deben funcionar realmente dentro de la simulación.

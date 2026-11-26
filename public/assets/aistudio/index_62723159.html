@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aldea IA - Simulador Pixel Art Local</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="layout-auto">
+  <header class="topbar">
+    <div class="brand">
+      <span class="badge">PIXEL SIM</span>
+      <h1>Aldea IA</h1>
+      <span id="era-label" class="era-pill">Era Primitiva</span>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat"><span>Día</span><strong id="stat-day">1</strong></div>
+      <div class="stat"><span>Hora</span><strong id="stat-time">08:00</strong></div>
+      <div class="stat" title="Límite calculado para Ryzen 5 3600 + RTX 3060m 6GB (Invisible para los agentes)">
+        <span>Capacidad Universo</span>
+        <strong id="stat-pop">20 / 48</strong>
+      </div>
+      <div class="stat"><span>Parejas</span><strong id="stat-couples">0</strong></div>
+      <div class="stat"><span>Conocimiento</span><strong id="stat-tech">0</strong></div>
+    </div>
+
+    <div class="controls">
+      <div class="speed-group" title="Velocidad de simulación">
+        <button data-speed="0" class="btn-speed">⏸</button>
+        <button data-speed="1" class="btn-speed active">x1</button>
+        <button data-speed="2" class="btn-speed">x2</button>
+        <button data-speed="4" class="btn-speed">x4</button>
+      </div>
+
+      <div class="layout-group" title="Orientación de pantalla">
+        <button data-layout="auto" class="btn-layout active">Auto</button>
+        <button data-layout="vertical" class="btn-layout">Vertical</button>
+        <button data-layout="horizontal" class="btn-layout">Horizontal</button>
+      </div>
+
+      <button id="btn-ollama" class="btn-secondary">Ollama (Heurístico)</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="canvas-wrapper">
+      <canvas id="world-canvas" width="960" height="640"></canvas>
+      <div id="limit-banner" class="limit-banner hidden">
+        ⚠️ Límite físico del universo alcanzado (48/48). Los aldeanos no saben del límite; la supervivencia regulará la población.
+      </div>
+    </section>
+
+    <aside class="panel-left">
+      <section class="card">
+        <h3>Bioma y Clima</h3>
+        <label>Bioma del mundo
+          <select id="select-biome">
+            <option value="grassland">Pradera Verde</option>
+            <option value="forest">Bosque Frondoso</option>
+            <option value="arid">Tierra Seca / Árida</option>
+            <option value="tundra">Tundra / Otoño</option>
+          </select>
+        </label>
+        <label>Clima actual
+          <select id="select-weather">
+            <option value="sunny">Soleado</option>
+            <option value="rain">Lluvia (Hidrata y hace brotar comida)</option>
+            <option value="drought">Sequía (Aumenta hambre)</option>
+            <option value="storm">Tormenta (Drena energía)</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="card">
+        <h3>Intervención Divina (Clic en el mapa)</h3>
+        <div class="tool-grid" id="tool-grid">
+          <button data-tool="inspect" class="tool-btn active">🔍 Inspeccionar</button>
+          <button data-tool="food" class="tool-btn">🍎 +Comida</button>
+          <button data-tool="wood" class="tool-btn">🪵 +Madera</button>
+          <button data-tool="stone" class="tool-btn">🪨 +Piedra</button>
+          <button data-tool="iron" class="tool-btn">⛏️ +Hierro</button>
+          <button data-tool="knowledge" class="tool-btn">📜 +Saber</button>
+        </div>
+        <div class="ai-request-box">
+          <small>Solicitud colectiva de la IA:</small>
+          <p id="ai-request-text">Analizando necesidades de la aldea...</p>
+          <button id="btn-grant-request" class="btn-accent">Conceder solicitud</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Pruebas de Supervivencia</h3>
+        <div class="trial-buttons">
+          <button id="trial-abundance" class="btn-trial">✨ Lluvia de Recursos</button>
+          <button id="trial-scarcity" class="btn-trial">🔥 Ola de Calor / Escasez</button>
+          <button id="trial-plague" class="btn-trial">☣️ Prueba de Resistencia</button>
+        </div>
+      </section>
+    </aside>
+
+    <aside class="panel-right">
+      <section class="card inspector" id="inspector-panel">
+        <h3>Inspector de Aldeano</h3>
+        <div id="agent-details" class="empty-state">
+          Hacé clic sobre un aldeano para ver su actividad en tiempo real, estado emocional, importancia social y árbol familiar.
+        </div>
+      </section>
+
+      <section class="card log-card">
+        <h3>Crónica y Pensamientos IA</h3>
+        <ul id="event-log" class="event-log"></ul>
+      </section>
+    </aside>
+  </main>
+
+  <!-- Modal Ollama -->
+  <div id="modal-ollama" class="modal hidden">
+    <div class="modal-content">
+      <h3>Configurar IA Local (Ollama)</h3>
+      <p>Conectá tu modelo local cuantizado (ej. <code>qwen2.5:3b</code> o <code>gemma2:2b</code>) corriendo en <code>http://localhost:11434</code>.</p>
+      <label>Endpoint URL
+        <input type="text" id="ollama-url" value="http://localhost:11434/api/generate">
+      </label>
+      <label>Modelo instalado
+        <input type="text" id="ollama-model" value="qwen2.5:3b">
+      </label>
+      <div class="modal-actions">
+        <button id="btn-save-ollama" class="btn-primary">Guardar y Activar</button>
+        <button id="btn-close-ollama" class="btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="simulation.js"></script>
+</body>
+</html>

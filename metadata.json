@@ -1,0 +1,6 @@
+{
+  "name": "Aldea IA",
+  "description": "Simulador de vida autónomo en pixel art con evolución de eras, construcción de casas, salud, economía y control de reglas mediante Qwen 2.5.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
