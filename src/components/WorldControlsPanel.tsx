@@ -147,7 +147,7 @@ function MinToggle({
       aria-label={open ? `Minimizar ${label}` : `Expandir ${label}`}
       data-testid={testId}
       onClick={onClick}
-      className="w-9 h-9 rounded-lg bg-[#0b1120] border border-slate-700 hover:border-slate-500 text-slate-200 text-[20px] font-mono flex items-center justify-center transition-colors shrink-0"
+      className="w-7 h-7 rounded-lg bg-[#0b1120] border border-slate-700 hover:border-slate-500 text-slate-200 text-[16px] font-mono flex items-center justify-center transition-colors shrink-0"
     >
       {open ? '−' : '+'}
     </button>
@@ -248,7 +248,7 @@ export function WorldControlsPanel({
             aria-selected={activeTab === tab.id}
             data-testid={tab.testId}
             onClick={() => setActiveTab(tab.id)}
-            className={`py-2 px-2.5 rounded-lg text-[17px] font-semibold transition-colors ${
+            className={`py-2 px-2.5 rounded-lg text-[13px] font-semibold transition-colors ${
               tab.id === 'audit' ? 'col-span-2' : ''
             } ${
               activeTab === tab.id
@@ -264,7 +264,7 @@ export function WorldControlsPanel({
       {activeTab === 'env' && (
         <section className="bg-[#111827] border border-slate-800 rounded-xl p-3.5" data-testid="env-panel">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-[21px] leading-snug font-bold tracking-wide text-slate-100">
+            <h2 className="text-[16px] leading-snug font-bold tracking-wide text-slate-100">
               Fondo Metálico y Entorno
             </h2>
             <MinToggle
@@ -278,7 +278,7 @@ export function WorldControlsPanel({
           {openEnv && (
             <div className="mt-3 flex flex-col gap-3">
               <div
-                className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[17px] flex flex-col gap-2 font-mono tabular-nums"
+                className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[13px] flex flex-col gap-2 font-mono tabular-nums"
                 data-testid="economy-reserve-box"
               >
                 <div className="flex justify-between gap-2 text-slate-200">
@@ -342,12 +342,12 @@ export function WorldControlsPanel({
               </div>
 
               <div className="grid grid-cols-1 gap-2.5">
-                <label className="flex flex-col gap-1.5 text-[18px] text-slate-300 font-medium">
+                <label className="flex flex-col gap-1.5 text-[14px] text-slate-300 font-medium">
                   <span>Bioma ({season})</span>
                   <select
                     value={biome}
                     onChange={(e) => onChangeBiome(e.target.value as BiomeType)}
-                    className="bg-[#0b1120] border border-slate-700 rounded-lg px-3 py-2.5 text-[18px] text-slate-100 focus:outline-none focus:border-emerald-500"
+                    className="bg-[#0b1120] border border-slate-700 rounded-lg px-3 py-2.5 text-[14px] text-slate-100 focus:outline-none focus:border-emerald-500"
                   >
                     <option value="grassland">Pradera (Primavera)</option>
                     <option value="arid">Árida (Verano)</option>
@@ -356,13 +356,13 @@ export function WorldControlsPanel({
                   </select>
                 </label>
 
-                <label className="flex flex-col gap-1.5 text-[18px] text-slate-300 font-medium">
+                <label className="flex flex-col gap-1.5 text-[14px] text-slate-300 font-medium">
                   <span>Clima</span>
                   <select
                     value={weather}
                     onChange={(e) => onChangeWeather(e.target.value as WeatherType)}
                     data-testid="weather-select"
-                    className="bg-[#0b1120] border border-slate-700 rounded-lg px-3 py-2.5 text-[18px] text-slate-100 focus:outline-none focus:border-emerald-500"
+                    className="bg-[#0b1120] border border-slate-700 rounded-lg px-3 py-2.5 text-[14px] text-slate-100 focus:outline-none focus:border-emerald-500"
                   >
                     <option value="sunny">Soleado</option>
                     <option value="rain">Lluvia</option>
@@ -376,7 +376,7 @@ export function WorldControlsPanel({
               <button
                 type="button"
                 onClick={onToggleResourcesPaused}
-                className={`w-full py-2.5 px-3 rounded-lg border text-[18px] font-semibold transition-colors ${
+                className={`w-full py-2.5 px-3 rounded-lg border text-[14px] font-semibold transition-colors ${
                   resourcesPaused
                     ? 'border-amber-600 bg-amber-950/70 text-amber-200 hover:bg-amber-900/70'
                     : 'border-slate-700 bg-[#0b1120] text-slate-100 hover:border-amber-500/60'
@@ -393,10 +393,10 @@ export function WorldControlsPanel({
         <section className="bg-[#111827] border border-slate-800 rounded-xl p-3.5" data-testid="tools-panel">
           <div className="flex items-center justify-between gap-2">
             <div className="flex flex-col">
-              <h2 className="text-[21px] leading-snug font-bold tracking-wide text-slate-100">
+              <h2 className="text-[16px] leading-snug font-bold tracking-wide text-slate-100">
                 Herramientas en el Mapa
               </h2>
-              <span className="text-[16px] text-slate-400 font-mono tabular-nums">{roadsCount} caminos</span>
+              <span className="text-[13px] text-slate-400 font-mono tabular-nums">{roadsCount} caminos</span>
             </div>
             <MinToggle
               open={openTools}
@@ -409,12 +409,12 @@ export function WorldControlsPanel({
           {openTools && (
             <div className="mt-3 flex flex-col gap-3">
               {isObserver && (
-                <div className="bg-sky-950/40 border border-sky-700/60 rounded-lg p-2.5 text-[16px] text-sky-200 flex flex-col gap-2">
+                <div className="bg-sky-950/40 border border-sky-700/60 rounded-lg p-2.5 text-[13px] text-sky-200 flex flex-col gap-2">
                   <span>Modo Observador: solo inspección</span>
                   <button
                     type="button"
                     onClick={() => onSetInterventionMode('intervention')}
-                    className="px-3 py-1.5 rounded-md bg-sky-700 hover:bg-sky-600 text-white text-[16px] font-semibold self-start"
+                    className="px-3 py-1.5 rounded-md bg-sky-700 hover:bg-sky-600 text-white text-[13px] font-semibold self-start"
                   >
                     Habilitar edición
                   </button>
@@ -431,7 +431,7 @@ export function WorldControlsPanel({
                       disabled={disabled}
                       data-testid={`tool-${t.id}`}
                       onClick={() => onSelectTool(t.id)}
-                      className={`px-2.5 py-2 text-[16px] font-medium rounded-lg border text-left transition-colors leading-tight disabled:opacity-40 ${
+                      className={`px-2.5 py-2 text-[13px] font-medium rounded-lg border text-left transition-colors leading-tight disabled:opacity-40 ${
                         tool === t.id
                           ? 'border-emerald-500 bg-emerald-950/60 text-emerald-200'
                           : 'border-slate-800 bg-[#0b1120] text-slate-200 hover:border-slate-700 hover:text-white'
@@ -444,9 +444,9 @@ export function WorldControlsPanel({
               </div>
 
               <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 flex flex-col gap-2">
-                <div className="flex flex-col gap-1 text-[17px]">
+                <div className="flex flex-col gap-1 text-[13px]">
                   <span className="font-semibold text-slate-200">Camino por tramo</span>
-                  <span className="font-mono text-[15px] text-amber-300 leading-snug" data-testid="road-unit-cost">
+                  <span className="font-mono text-[12px] text-amber-300 leading-snug" data-testid="road-unit-cost">
                     {currentRoadUnitCost}
                   </span>
                 </div>
@@ -463,7 +463,7 @@ export function WorldControlsPanel({
                       type="button"
                       onClick={() => onSelectRoadType(rt.id)}
                       data-testid={`road-type-${rt.id}`}
-                      className={`py-2 px-2 rounded-lg border text-[16px] font-medium transition-colors ${
+                      className={`py-2 px-2 rounded-lg border text-[13px] font-medium transition-colors ${
                         selectedRoadType === rt.id
                           ? 'border-sky-500 bg-sky-950/60 text-sky-200'
                           : 'border-slate-800 bg-[#111827] text-slate-200 hover:border-slate-700'
@@ -478,7 +478,7 @@ export function WorldControlsPanel({
                     aria-pressed={selectedRoadLamp}
                     onClick={onToggleRoadLamp}
                     title="Farol (+2 Mad. +1 Cob. +1 Hie.)"
-                    className={`py-2 px-2 rounded-lg border text-[16px] font-medium transition-colors ${
+                    className={`py-2 px-2 rounded-lg border text-[13px] font-medium transition-colors ${
                       selectedRoadLamp
                         ? 'border-amber-500/80 bg-amber-950/40 text-amber-200'
                         : 'border-slate-800 bg-[#111827] text-slate-200 hover:border-slate-700'
@@ -492,16 +492,16 @@ export function WorldControlsPanel({
                   disabled={isObserver}
                   data-testid="build-base-roads-btn"
                   onClick={onBuildBaseRoads}
-                  className="w-full py-2 px-3 rounded-lg bg-[#111827] border border-slate-700 hover:border-sky-500 disabled:opacity-40 text-sky-200 text-[16px] font-medium transition-colors leading-snug"
+                  className="w-full py-2 px-3 rounded-lg bg-[#111827] border border-slate-700 hover:border-sky-500 disabled:opacity-40 text-sky-200 text-[13px] font-medium transition-colors leading-snug"
                 >
                   Trazar red principal (gasta materiales)
                 </button>
               </div>
 
               <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 flex flex-col gap-2">
-                <div className="flex items-center justify-between text-[17px]">
+                <div className="flex items-center justify-between text-[13px]">
                   <span className="font-semibold text-slate-200">Fauna y Ganado</span>
-                  <span className="text-slate-400 font-mono tabular-nums text-[15px]">
+                  <span className="text-slate-400 font-mono tabular-nums text-[12px]">
                     {animalsCount} activos
                   </span>
                 </div>
@@ -512,7 +512,7 @@ export function WorldControlsPanel({
                       type="button"
                       disabled={isObserver}
                       onClick={() => onSpawnAnimal(ab.id)}
-                      className={`px-2.5 py-2 text-[16px] rounded-lg border text-left transition-colors leading-tight disabled:opacity-40 ${
+                      className={`px-2.5 py-2 text-[13px] rounded-lg border text-left transition-colors leading-tight disabled:opacity-40 ${
                         ab.id === 'bear' || ab.id === 'wildcat'
                           ? 'border-rose-900/70 bg-rose-950/40 text-rose-200 hover:border-rose-600'
                           : 'border-slate-800 bg-[#111827] text-slate-200 hover:border-emerald-600'
@@ -525,12 +525,12 @@ export function WorldControlsPanel({
               </div>
 
               <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 flex flex-col gap-2">
-                <p className="text-[16px] text-slate-200 leading-snug">{collectiveHint}</p>
+                <p className="text-[13px] text-slate-200 leading-snug">{collectiveHint}</p>
                 <button
                   type="button"
                   disabled={resourcesPaused || isObserver}
                   onClick={onGrantRequest}
-                  className="w-full py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-45 text-white text-[17px] font-semibold transition-colors"
+                  className="w-full py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-45 text-white text-[13px] font-semibold transition-colors"
                 >
                   {isObserver
                     ? 'Bloqueado en Modo Observador'
@@ -548,10 +548,10 @@ export function WorldControlsPanel({
         <section className="bg-[#111827] border border-slate-800 rounded-xl p-3.5" data-testid="laws-panel">
           <div className="flex items-start justify-between gap-2">
             <div className="flex flex-col">
-              <h2 className="text-[21px] leading-snug font-bold tracking-wide text-slate-100">
+              <h2 className="text-[16px] leading-snug font-bold tracking-wide text-slate-100">
                 Leyes, Consejo y Representante
               </h2>
-              <span className="text-[16px] text-violet-300 font-mono tabular-nums">
+              <span className="text-[13px] text-violet-300 font-mono tabular-nums">
                 {activeLawsCount}/7 activas
               </span>
             </div>
@@ -565,21 +565,21 @@ export function WorldControlsPanel({
 
           {openLaws && (
             <div className="mt-3 flex flex-col gap-3">
-              <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[17px] flex flex-col gap-2.5">
+              <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[13px] flex flex-col gap-2.5">
                 <div className="text-slate-300">
                   Rep.:{' '}
                   <strong className="text-violet-300" data-testid="representative-name">
                     {representativeName ?? 'Por elegir'}
                   </strong>
                 </div>
-                <div className="font-mono tabular-nums text-[15px] text-slate-300">
+                <div className="font-mono tabular-nums text-[12px] text-slate-300">
                   <span className={politics.approvalRating >= 55 ? 'text-emerald-400' : 'text-rose-400'}>
                     Aprob. {Math.round(politics.approvalRating)}%
                   </span>
                   {' · '}Leg. {Math.round(politics.legitimacy)}%{' · '}Prot. {politics.protestsCount}
                 </div>
                 <div className="flex flex-col gap-2 pt-1 border-t border-slate-800/80">
-                  <span className="text-[16px] text-slate-300">
+                  <span className="text-[13px] text-slate-300">
                     Petición (30m):{' '}
                     <span className="font-mono text-slate-100 font-semibold" data-testid="petition-countdown">
                       {formatCountdown(petitionTimerSec)}
@@ -589,7 +589,7 @@ export function WorldControlsPanel({
                     type="button"
                     data-testid="summon-petition-btn"
                     onClick={onSummonPetition}
-                    className="w-full py-2 px-3 rounded-lg bg-violet-950/70 border border-violet-700/70 hover:bg-violet-900/70 text-violet-100 text-[17px] font-semibold transition-colors"
+                    className="w-full py-2 px-3 rounded-lg bg-violet-950/70 border border-violet-700/70 hover:bg-violet-900/70 text-violet-100 text-[13px] font-semibold transition-colors"
                   >
                     Convocar petición
                   </button>
@@ -608,7 +608,7 @@ export function WorldControlsPanel({
                     onChange={onToggleQwenAutoRespond}
                     className="mt-1 w-4 h-4 rounded border-slate-600 bg-slate-900 text-violet-500 focus:ring-violet-500 shrink-0"
                   />
-                  <span className="text-[16px] font-medium leading-snug">
+                  <span className="text-[13px] font-medium leading-snug">
                     Qwen Responde automático cada 30m
                   </span>
                 </label>
@@ -625,12 +625,12 @@ export function WorldControlsPanel({
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="font-semibold text-[18px] leading-snug">{law.name}</div>
+                      <div className="font-semibold text-[14px] leading-snug">{law.name}</div>
                       <button
                         type="button"
                         data-testid={`law-toggle-${law.id}`}
                         onClick={() => onToggleLaw(law.id)}
-                        className={`px-3 py-1 rounded-md text-[15px] font-semibold shrink-0 transition-colors ${
+                        className={`px-3 py-1 rounded-md text-[12px] font-semibold shrink-0 transition-colors ${
                           law.active
                             ? 'bg-violet-600 hover:bg-violet-500 text-white'
                             : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
@@ -639,7 +639,7 @@ export function WorldControlsPanel({
                         {law.active ? 'Activa' : 'Activar'}
                       </button>
                     </div>
-                    <div className="text-[16px] text-slate-400 leading-snug">{law.description}</div>
+                    <div className="text-[13px] text-slate-400 leading-snug">{law.description}</div>
                   </div>
                 ))}
               </div>
@@ -668,19 +668,19 @@ export function WorldControlsPanel({
                   data-testid={`mode-${m.id}`}
                   onClick={() => onSetInterventionMode(m.id)}
                   title={m.desc}
-                  className={`py-2 px-3 rounded-lg border text-[17px] font-semibold transition-colors flex items-center justify-between gap-2 ${
+                  className={`py-2 px-3 rounded-lg border text-[13px] font-semibold transition-colors flex items-center justify-between gap-2 ${
                     interventionMode === m.id
                       ? 'border-violet-500 bg-violet-950/60 text-violet-100'
                       : 'border-slate-800 bg-[#0b1120] text-slate-300 hover:text-white'
                   }`}
                 >
                   <span>{m.label}</span>
-                  <span className="text-[13px] font-normal opacity-80">{m.desc}</span>
+                  <span className="text-[11px] font-normal opacity-80">{m.desc}</span>
                 </button>
               ))}
             </div>
 
-            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 flex flex-col gap-2.5 text-[17px]">
+            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 flex flex-col gap-2.5 text-[13px]">
               {(
                 [
                   { key: 'production', label: 'Producción', values: [1, 2, 5, 10] },
@@ -698,7 +698,7 @@ export function WorldControlsPanel({
                         type="button"
                         disabled={isObserver}
                         onClick={() => onUpdateMultipliers({ [row.key]: val })}
-                        className={`py-1.5 rounded-md font-mono text-[15px] border transition-colors disabled:opacity-40 ${
+                        className={`py-1.5 rounded-md font-mono text-[12px] border transition-colors disabled:opacity-40 ${
                           divineMultipliers[row.key] === val
                             ? 'border-emerald-500 bg-emerald-950/60 text-emerald-200 font-semibold'
                             : 'border-slate-800 bg-[#111827] text-slate-300 hover:border-slate-700'
@@ -727,7 +727,7 @@ export function WorldControlsPanel({
                       disabled={isObserver}
                       data-testid={`construction-mode-${cm.id}`}
                       onClick={() => onUpdateMultipliers({ constructionMode: cm.id })}
-                      className={`py-1.5 px-1 rounded-md text-[15px] border transition-colors disabled:opacity-40 ${
+                      className={`py-1.5 px-1 rounded-md text-[12px] border transition-colors disabled:opacity-40 ${
                         divineMultipliers.constructionMode === cm.id
                           ? 'border-amber-500 bg-amber-950/60 text-amber-200 font-semibold'
                           : 'border-slate-800 bg-[#111827] text-slate-300 hover:border-slate-700'
@@ -743,7 +743,7 @@ export function WorldControlsPanel({
 
           <section className="bg-[#111827] border border-slate-800 rounded-xl p-3.5" data-testid="events-panel">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="text-[21px] leading-snug font-bold tracking-wide text-slate-100">
+              <h2 className="text-[16px] leading-snug font-bold tracking-wide text-slate-100">
                 Eventos, Desastres y Edición
               </h2>
               <MinToggle
@@ -761,7 +761,7 @@ export function WorldControlsPanel({
                     type="button"
                     disabled={resourcesPaused || isObserver}
                     onClick={onTrialAbundance}
-                    className="py-2 px-3 rounded-lg bg-[#0b1120] border border-slate-800 hover:border-emerald-600 disabled:opacity-40 text-slate-100 text-[17px] font-medium text-left"
+                    className="py-2 px-3 rounded-lg bg-[#0b1120] border border-slate-800 hover:border-emerald-600 disabled:opacity-40 text-slate-100 text-[13px] font-medium text-left"
                   >
                     + Lluvia de Oro y Plata
                   </button>
@@ -769,7 +769,7 @@ export function WorldControlsPanel({
                     type="button"
                     disabled={isObserver}
                     onClick={onTrialScarcity}
-                    className="py-2 px-3 rounded-lg bg-[#0b1120] border border-slate-800 hover:border-amber-600 disabled:opacity-40 text-slate-100 text-[17px] font-medium text-left"
+                    className="py-2 px-3 rounded-lg bg-[#0b1120] border border-slate-800 hover:border-amber-600 disabled:opacity-40 text-slate-100 text-[13px] font-medium text-left"
                   >
                     Sequía y escasez
                   </button>
@@ -778,7 +778,7 @@ export function WorldControlsPanel({
                     disabled={isObserver}
                     onClick={onTriggerLightningStorm}
                     data-testid="trigger-lightning-btn"
-                    className="py-2 px-3 rounded-lg bg-amber-950/40 border border-amber-800/60 hover:bg-amber-900/60 disabled:opacity-40 text-amber-200 text-[17px] font-medium text-left"
+                    className="py-2 px-3 rounded-lg bg-amber-950/40 border border-amber-800/60 hover:bg-amber-900/60 disabled:opacity-40 text-amber-200 text-[13px] font-medium text-left"
                   >
                     ⚡ Rayos y Tormenta
                   </button>
@@ -786,7 +786,7 @@ export function WorldControlsPanel({
                     type="button"
                     disabled={isObserver}
                     onClick={onTrialPlague}
-                    className="py-2 px-3 rounded-lg bg-[#0b1120] border border-slate-800 hover:border-rose-600 disabled:opacity-40 text-slate-100 text-[17px] font-medium text-left"
+                    className="py-2 px-3 rounded-lg bg-[#0b1120] border border-slate-800 hover:border-rose-600 disabled:opacity-40 text-slate-100 text-[13px] font-medium text-left"
                   >
                     Brote de enfermedad
                   </button>
@@ -794,7 +794,7 @@ export function WorldControlsPanel({
                     type="button"
                     disabled={isObserver}
                     onClick={() => onDivineTriggerEvent('frost')}
-                    className="py-2 px-3 rounded-lg bg-sky-950/40 border border-sky-800/60 hover:border-sky-500 disabled:opacity-40 text-sky-200 text-[17px] font-medium text-left"
+                    className="py-2 px-3 rounded-lg bg-sky-950/40 border border-sky-800/60 hover:border-sky-500 disabled:opacity-40 text-sky-200 text-[13px] font-medium text-left"
                   >
                     ❄️ Helada extrema
                   </button>
@@ -802,7 +802,7 @@ export function WorldControlsPanel({
                     type="button"
                     disabled={isObserver}
                     onClick={() => onDivineTriggerEvent('flood')}
-                    className="py-2 px-3 rounded-lg bg-sky-950/40 border border-sky-800/60 hover:border-sky-500 disabled:opacity-40 text-sky-200 text-[17px] font-medium text-left"
+                    className="py-2 px-3 rounded-lg bg-sky-950/40 border border-sky-800/60 hover:border-sky-500 disabled:opacity-40 text-sky-200 text-[13px] font-medium text-left"
                   >
                     🌊 Inundación
                   </button>
@@ -810,7 +810,7 @@ export function WorldControlsPanel({
                     type="button"
                     disabled={isObserver}
                     onClick={() => onDivineTriggerEvent('blight')}
-                    className="py-2 px-3 rounded-lg bg-amber-950/40 border border-amber-800/60 hover:border-amber-500 disabled:opacity-40 text-amber-200 text-[17px] font-medium text-left"
+                    className="py-2 px-3 rounded-lg bg-amber-950/40 border border-amber-800/60 hover:border-amber-500 disabled:opacity-40 text-amber-200 text-[13px] font-medium text-left"
                   >
                     🦠 Plaga agrícola
                   </button>
@@ -818,7 +818,7 @@ export function WorldControlsPanel({
                     type="button"
                     disabled={isObserver}
                     onClick={() => onDivineTriggerEvent('abundance')}
-                    className="py-2 px-3 rounded-lg bg-emerald-950/40 border border-emerald-700/60 hover:border-emerald-500 disabled:opacity-40 text-emerald-200 text-[17px] font-medium text-left"
+                    className="py-2 px-3 rounded-lg bg-emerald-950/40 border border-emerald-700/60 hover:border-emerald-500 disabled:opacity-40 text-emerald-200 text-[13px] font-medium text-left"
                   >
                     🌾 Gran cosecha
                   </button>
@@ -828,19 +828,19 @@ export function WorldControlsPanel({
                   type="button"
                   disabled={farmsCount === 0 || isObserver}
                   onClick={onKillAllCrops}
-                  className="w-full py-2 px-3 rounded-lg bg-rose-950/60 border border-rose-800/70 hover:bg-rose-900/70 disabled:opacity-40 text-rose-200 text-[17px] font-semibold text-left"
+                  className="w-full py-2 px-3 rounded-lg bg-rose-950/60 border border-rose-800/70 hover:bg-rose-900/70 disabled:opacity-40 text-rose-200 text-[13px] font-semibold text-left"
                 >
                   Matar todos los cultivos ({farmsCount})
                 </button>
 
                 <div className="bg-[#0b1120] border border-violet-800/50 rounded-lg p-3 flex flex-col gap-2">
-                  <div className="flex flex-col gap-1 text-[17px]">
+                  <div className="flex flex-col gap-1 text-[13px]">
                     <span className="font-semibold text-violet-300">Poderes Divinos Avanzados</span>
                     {interventionMode !== 'advanced' && (
                       <button
                         type="button"
                         onClick={() => onSetInterventionMode('advanced')}
-                        className="text-[15px] text-violet-300 underline self-start"
+                        className="text-[12px] text-violet-300 underline self-start"
                       >
                         Activar Modo Avanzado
                       </button>
@@ -852,7 +852,7 @@ export function WorldControlsPanel({
                       disabled={interventionMode !== 'advanced'}
                       onClick={() => onDivineSpawnVillagers(1)}
                       data-testid="divine-spawn-1"
-                      className="py-2 px-2.5 rounded-lg bg-[#111827] border border-slate-800 hover:border-violet-500 disabled:opacity-40 text-[16px] text-slate-200 text-left"
+                      className="py-2 px-2.5 rounded-lg bg-[#111827] border border-slate-800 hover:border-violet-500 disabled:opacity-40 text-[13px] text-slate-200 text-left"
                     >
                       +1 Aldeano
                     </button>
@@ -860,7 +860,7 @@ export function WorldControlsPanel({
                       type="button"
                       disabled={interventionMode !== 'advanced'}
                       onClick={() => onDivineSpawnVillagers(5)}
-                      className="py-2 px-2.5 rounded-lg bg-[#111827] border border-slate-800 hover:border-violet-500 disabled:opacity-40 text-[16px] text-slate-200 text-left"
+                      className="py-2 px-2.5 rounded-lg bg-[#111827] border border-slate-800 hover:border-violet-500 disabled:opacity-40 text-[13px] text-slate-200 text-left"
                     >
                       +5 Aldeanos
                     </button>
@@ -868,7 +868,7 @@ export function WorldControlsPanel({
                       type="button"
                       disabled={interventionMode !== 'advanced'}
                       onClick={onDivineRepairAll}
-                      className="py-2 px-2.5 rounded-lg bg-[#111827] border border-slate-800 hover:border-emerald-500 disabled:opacity-40 text-[16px] text-emerald-200 text-left"
+                      className="py-2 px-2.5 rounded-lg bg-[#111827] border border-slate-800 hover:border-emerald-500 disabled:opacity-40 text-[13px] text-emerald-200 text-left"
                     >
                       Reparar 100%
                     </button>
@@ -876,7 +876,7 @@ export function WorldControlsPanel({
                       type="button"
                       disabled={interventionMode !== 'advanced' || activeConstructionsCount === 0}
                       onClick={onDivineCompleteConstructions}
-                      className="py-2 px-2.5 rounded-lg bg-[#111827] border border-slate-800 hover:border-amber-500 disabled:opacity-40 text-[16px] text-amber-200 text-left"
+                      className="py-2 px-2.5 rounded-lg bg-[#111827] border border-slate-800 hover:border-amber-500 disabled:opacity-40 text-[13px] text-amber-200 text-left"
                     >
                       Obras ({activeConstructionsCount})
                     </button>
@@ -884,7 +884,7 @@ export function WorldControlsPanel({
                       type="button"
                       disabled={interventionMode !== 'advanced'}
                       onClick={() => onDivineGrantKnowledge(25)}
-                      className="py-2 px-2.5 rounded-lg bg-[#111827] border border-slate-800 hover:border-sky-500 disabled:opacity-40 text-[16px] text-sky-200 text-left"
+                      className="py-2 px-2.5 rounded-lg bg-[#111827] border border-slate-800 hover:border-sky-500 disabled:opacity-40 text-[13px] text-sky-200 text-left"
                     >
                       +25 Saber
                     </button>
@@ -892,7 +892,7 @@ export function WorldControlsPanel({
                       type="button"
                       disabled={interventionMode !== 'advanced'}
                       onClick={() => onDivineAdjustTax(economyReserve.taxRatePct >= 15 ? 5 : economyReserve.taxRatePct + 5)}
-                      className="py-2 px-2.5 rounded-lg bg-[#111827] border border-slate-800 hover:border-amber-500 disabled:opacity-40 text-[16px] text-amber-200 text-left"
+                      className="py-2 px-2.5 rounded-lg bg-[#111827] border border-slate-800 hover:border-amber-500 disabled:opacity-40 text-[13px] text-amber-200 text-left"
                     >
                       Impuesto {economyReserve.taxRatePct}%
                     </button>
@@ -904,7 +904,7 @@ export function WorldControlsPanel({
                         type="button"
                         disabled={interventionMode !== 'advanced'}
                         onClick={() => onDivineForceSeason(sName)}
-                        className={`py-1.5 rounded-md border text-[16px] disabled:opacity-40 ${
+                        className={`py-1.5 rounded-md border text-[13px] disabled:opacity-40 ${
                           season === sName
                             ? 'border-sky-500 bg-sky-950/60 text-sky-200 font-semibold'
                             : 'border-slate-800 bg-[#111827] text-slate-300'
@@ -925,14 +925,14 @@ export function WorldControlsPanel({
         <div className="flex flex-col gap-3">
           <section className="bg-[#111827] border border-slate-800 rounded-xl p-3.5 flex flex-col gap-2.5">
             <div className="flex flex-col gap-1">
-              <h2 className="text-[21px] leading-snug font-bold tracking-wide text-slate-100">
+              <h2 className="text-[16px] leading-snug font-bold tracking-wide text-slate-100">
                 Mercado Dinámico
               </h2>
-              <span className="font-mono text-[17px] text-amber-300 font-semibold" data-testid="market-inflation">
+              <span className="font-mono text-[13px] text-amber-300 font-semibold" data-testid="market-inflation">
                 Inflación x{marketPrices.inflationIndex}
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-2 font-mono tabular-nums text-[16px]">
+            <div className="grid grid-cols-2 gap-2 font-mono tabular-nums text-[13px]">
               {[
                 { label: 'Comida', val: marketPrices.food },
                 { label: 'Pan', val: marketPrices.bread },
@@ -960,10 +960,10 @@ export function WorldControlsPanel({
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex flex-col">
-                <h2 className="text-[21px] leading-snug font-bold tracking-wide text-slate-100">
+                <h2 className="text-[16px] leading-snug font-bold tracking-wide text-slate-100">
                   Control de Recursos
                 </h2>
-                <span className="text-[16px] text-slate-400 font-mono tabular-nums" data-testid="ledger-count">
+                <span className="text-[13px] text-slate-400 font-mono tabular-nums" data-testid="ledger-count">
                   {resourceLedger.length} registros
                 </span>
               </div>
@@ -978,27 +978,27 @@ export function WorldControlsPanel({
             {openLedger && (
               <div className="mt-3 flex flex-col gap-2 max-h-96 overflow-y-auto pr-1">
                 {recentLedger.length === 0 ? (
-                  <p className="text-[17px] text-slate-400 italic">
+                  <p className="text-[13px] text-slate-400 italic">
                     Aún no se registraron consumos, reservas, mantenimientos ni producciones.
                   </p>
                 ) : (
                   recentLedger.map((entry) => (
                     <div
                       key={entry.id}
-                      className="bg-[#0b1120] border border-slate-800 rounded-lg p-2.5 text-[16px] flex flex-col gap-1"
+                      className="bg-[#0b1120] border border-slate-800 rounded-lg p-2.5 text-[13px] flex flex-col gap-1"
                     >
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <span className="font-semibold text-slate-100 leading-snug">
                           {entry.targetName}
                         </span>
-                        <span className="font-mono text-[15px] text-sky-300 shrink-0">
+                        <span className="font-mono text-[12px] text-sky-300 shrink-0">
                           D{entry.day}·{entry.operationType}
                         </span>
                       </div>
-                      <div className="text-amber-300 font-mono text-[15px]">
+                      <div className="text-amber-300 font-mono text-[12px]">
                         {formatResourceCost(entry.materials)}
                       </div>
-                      <div className="text-[15px] text-slate-400 flex flex-col gap-0.5">
+                      <div className="text-[12px] text-slate-400 flex flex-col gap-0.5">
                         <span>
                           {entry.actorName} ({entry.source})
                         </span>

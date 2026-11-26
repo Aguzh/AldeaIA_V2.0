@@ -36,6 +36,7 @@ import {
   electRepresentative,
   FOREST_MAX_X,
   formatResourceCost,
+  getBuildingOccupancySnapshot,
   getRoadTileCost,
   getTotalCirculatingCoins,
   HOUSE_SIZE_CAPACITIES,
@@ -571,6 +572,7 @@ export default function App() {
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [isQwenBusy, setIsQwenBusy] = useState(false);
   const [isVerticalAuto, setIsVerticalAuto] = useState(false);
+  const [panelWidthPreset, setPanelWidthPreset] = useState<'normal' | 'wide' | 'max'>('normal');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => soundEngine.isEnabled());
   const [soundVolume, setSoundVolume] = useState<number>(() => soundEngine.getVolume());
   const [serverSyncStatus, setServerSyncStatus] = useState<string>('Sincronizado');
@@ -970,8 +972,20 @@ export default function App() {
   }
 
   function findEntityAtWorld(s: SimulationState, x: number, y: number): SelectedEntity | null {
+    const occupancy = getBuildingOccupancySnapshot(s);
+
+    let bestBadge: { agentId: number; d: number } | null = null;
+    for (const badge of occupancy.badges) {
+      if (Math.abs(x - badge.x) <= 7 && Math.abs(y - badge.y) <= 7) {
+        const d = Math.hypot(badge.x - x, badge.y - y);
+        if (!bestBadge || d < bestBadge.d) bestBadge = { agentId: badge.agentId, d };
+      }
+    }
+    if (bestBadge) return { kind: 'agent', id: bestBadge.agentId };
+
     let bestAgent: { id: number; d: number } | null = null;
     for (const a of s.agents) {
+      if (occupancy.insideAgentIds.has(a.id)) continue;
       const d = Math.hypot(a.x - x, a.y - y);
       if (d < 20 && (!bestAgent || d < bestAgent.d)) bestAgent = { id: a.id, d };
     }
@@ -1819,15 +1833,19 @@ export default function App() {
         className={`flex-1 p-3 gap-3 grid min-h-0 ${
           useVerticalLayout
             ? 'grid-cols-1 md:grid-cols-2 grid-rows-[minmax(380px,54vh)_auto]'
-            : 'grid-cols-[310px_minmax(0,1fr)_360px] overflow-hidden'
+            : panelWidthPreset === 'max'
+              ? 'grid-cols-[clamp(370px,32vw,520px)_minmax(240px,1fr)_clamp(400px,34vw,560px)] overflow-hidden'
+              : panelWidthPreset === 'wide'
+                ? 'grid-cols-[clamp(335px,28vw,450px)_minmax(280px,1fr)_clamp(370px,30vw,490px)] overflow-hidden'
+                : 'grid-cols-[clamp(300px,23vw,375px)_minmax(320px,1fr)_clamp(340px,25vw,415px)] overflow-hidden'
         }`}
       >
         <section
-          className={`bg-[#050914] border border-slate-800 rounded-xl overflow-hidden flex flex-col min-h-0 ${
+          className={`bg-[#050914] border border-slate-800 rounded-xl overflow-hidden flex flex-col min-w-0 min-h-0 ${
             useVerticalLayout ? 'md:col-span-2 order-1' : 'order-2 h-full'
           }`}
         >
-          <div className="flex-1 flex items-center justify-center relative min-h-0 p-2 overflow-hidden">
+          <div className="flex-1 flex items-center justify-center relative min-w-0 min-h-0 p-2 overflow-hidden">
             <canvas
               ref={canvasRef}
               width={CANVAS_WIDTH}
@@ -1884,12 +1902,46 @@ export default function App() {
                 {state.resourcesPaused ? 'Recursos pausados' : 'Recursos activos'}
               </span>
             </span>
-            <span>
-              Obras: <strong className="text-slate-200">{operationalBuildingsCount}/{state.specialBuildings.length}</strong> · Cultivos:{' '}
-              <strong className="text-slate-200">{state.farms.length}</strong> · Caminos:{' '}
-              <strong className="text-slate-200">{state.roads.length}</strong> · Fauna:{' '}
-              <strong className="text-slate-200">{state.animals.length}</strong>
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {!useVerticalLayout && (
+                <div
+                  className="flex items-center gap-1 bg-[#0b1120] border border-slate-800 rounded-md p-0.5"
+                  role="group"
+                  aria-label="Ancho de paneles laterales"
+                  data-testid="panel-width-controls"
+                >
+                  <span className="text-[10px] text-slate-400 px-1.5">Paneles:</span>
+                  {(
+                    [
+                      { id: 'normal', label: 'Normal' },
+                      { id: 'wide', label: 'Amplio' },
+                      { id: 'max', label: 'Máx' },
+                    ] as const
+                  ).map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      data-testid={`panel-width-${preset.id}`}
+                      aria-pressed={panelWidthPreset === preset.id}
+                      onClick={() => setPanelWidthPreset(preset.id)}
+                      className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                        panelWidthPreset === preset.id
+                          ? 'bg-emerald-600 text-white'
+                          : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <span>
+                Obras: <strong className="text-slate-200">{operationalBuildingsCount}/{state.specialBuildings.length}</strong> · Cultivos:{' '}
+                <strong className="text-slate-200">{state.farms.length}</strong> · Caminos:{' '}
+                <strong className="text-slate-200">{state.roads.length}</strong> · Fauna:{' '}
+                <strong className="text-slate-200">{state.animals.length}</strong>
+              </span>
+            </div>
           </div>
         </section>
 

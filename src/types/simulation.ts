@@ -827,4 +827,22 @@ export type QwenAction =
   | { type: 'ISSUE_BANK_LOANS' }
   | { type: 'FORM_MENTORSHIPS' }
   | { type: 'REPAIR_BUILDINGS' }
-  | { type: 'RUN_CARAVANS' };
+  | { type: 'RUN_CARAVANS' }
+  | {
+      type: 'STYLE_VILLAGERS';
+      targetName?: string;
+      shirt?: string;
+      hairStyle?: Agent['hairStyle'];
+      hairColor?: string;
+      skin?: string;
+    };
+
+export interface BuildingOccupantBadge {
+  agentId: number;
+  buildingKind: 'house' | 'special';
+  buildingId: number;
+  buildingType?: SpecialBuildingType;
+  x: number;
+  y: number;
+}
+

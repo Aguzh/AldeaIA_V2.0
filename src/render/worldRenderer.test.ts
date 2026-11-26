@@ -9,7 +9,20 @@ import {
   createBridge,
 } from '../simulation/rules';
 import { drawAdultVillager } from './adultVillagers';
+import { drawBuildingsAndFarms } from './buildingsAndFarms';
 import { drawChildVillager } from './childVillagers';
+import {
+  drawFires,
+  drawForestAndMountains,
+  drawResourceNodes,
+  getSunShadowOffset,
+} from './natureAndProps';
+import {
+  drawBiomeTerrain,
+  drawBridge,
+  drawRiverWater,
+  drawRoads,
+} from './terrainAndWater';
 import { renderWorldScene } from './worldRenderer';
 
 interface DrawOp {
@@ -74,18 +87,24 @@ function createMockCanvasContext() {
 }
 
 test('renderWorldScene enforces crisp pixel-art imageSmoothingEnabled = false and delegates from engine.renderWorld', () => {
-  const state = createInitialState();
-  const { ctx: ctxScene, ops: opsScene } = createMockCanvasContext();
-  ctxScene.imageSmoothingEnabled = true;
-  renderWorldScene(ctxScene, state);
-  assert.equal(ctxScene.imageSmoothingEnabled, false);
-  assert.ok(opsScene.length > 50);
+  const origNow = performance.now;
+  performance.now = () => 1000;
+  try {
+    const state = createInitialState();
+    const { ctx: ctxScene, ops: opsScene } = createMockCanvasContext();
+    ctxScene.imageSmoothingEnabled = true;
+    renderWorldScene(ctxScene, state);
+    assert.equal(ctxScene.imageSmoothingEnabled, false);
+    assert.ok(opsScene.length > 50);
 
-  const { ctx: ctxEngine, ops: opsEngine } = createMockCanvasContext();
-  ctxEngine.imageSmoothingEnabled = true;
-  renderWorld(ctxEngine, state);
-  assert.equal(ctxEngine.imageSmoothingEnabled, false);
-  assert.equal(opsEngine.length, opsScene.length);
+    const { ctx: ctxEngine, ops: opsEngine } = createMockCanvasContext();
+    ctxEngine.imageSmoothingEnabled = true;
+    renderWorld(ctxEngine, state);
+    assert.equal(ctxEngine.imageSmoothingEnabled, false);
+    assert.equal(opsEngine.length, opsScene.length);
+  } finally {
+    performance.now = origNow;
+  }
 });
 
 test('renderWorldScene draws river water -> river fish -> bridge in strict back-to-front order so fish always swim under the bridge', () => {
@@ -155,3 +174,102 @@ test('drawChildVillager and drawAdultVillager are cleanly isolated', () => {
     'Adult miner should draw miner helmet headlamp'
   );
 });
+
+test('scenery pixel art modules round fillRect and strokeRect coordinates to integers', () => {
+  const state = createInitialState();
+  // Introduce fractional positions to verify Math.round pixel snapping
+  state.houses.forEach((h, idx) => {
+    h.x += 0.37 + idx * 0.11;
+    h.y += 0.63;
+  });
+  state.farms.forEach((f) => {
+    f.x += 0.49;
+    f.y += 0.51;
+  });
+  state.resources.forEach((r) => {
+    r.x += 0.25;
+    r.y += 0.75;
+  });
+  state.fires.push({ id: 999, x: 312.42, y: 214.68, intensity: 1, targetKind: 'forest', cause: 'test' });
+
+  const { ctx, ops } = createMockCanvasContext();
+  const shadow = getSunShadowOffset(state.minute, false);
+  const occupied = new Set(state.agents.map((a) => a.houseId).filter((id): id is number => id !== null));
+
+  drawBiomeTerrain(ctx, state.biome, state.season);
+  drawRoads(ctx, state.roads);
+  drawRiverWater(ctx, state.minute, state.season, 1.37);
+  drawBridge(ctx, state.bridge, false);
+  drawBuildingsAndFarms(ctx, state, false, occupied, shadow, 1.37, null);
+  drawForestAndMountains(ctx, state.season, 1.37, shadow);
+  drawResourceNodes(ctx, state.resources, 1.37);
+  drawFires(ctx, state.fires, state.minute);
+
+  const rectOps = ops.filter((o) => o.op === 'fillRect' || o.op === 'strokeRect');
+  assert.ok(rectOps.length > 100, 'Expected substantial scenery draw ops');
+  const nonIntegerRects = rectOps.filter((o) => o.args.some((v) => !Number.isInteger(v)));
+  assert.equal(
+    nonIntegerRects.length,
+    0,
+    `Expected all scenery fillRect/strokeRect coords & sizes to be integers, found: ${JSON.stringify(nonIntegerRects.slice(0, 3))}`
+  );
+});
+
+test('16-bit sprite modules (adultVillagers, childVillagers, wildlife, occupant heads) snap all rects to integer pixel grid without gradients', async () => {
+  const { drawBuildingOccupantHeads, drawFishingRipple } = await import('./adultVillagers');
+  const { drawWildlifeAnimals } = await import('./wildlife');
+  const { createHouseNearCenter, createSpecialBuilding } = await import('../simulation/rules');
+
+  const state = createInitialState();
+  const house = createHouseNearCenter(state, 'Tester', 'south', 'small', 600, 380);
+  const bank = createSpecialBuilding(state, 'bank', 'Banquero', 720, 380);
+  const dock = createSpecialBuilding(state, 'dock', 'Pescador', 640, 194);
+  assert.ok(bank && dock);
+
+  state.agents[0].x += 0.33;
+  state.agents[0].y += 0.67;
+  state.agents[0].walkFrame = 1.25;
+  state.agents[1].isChild = true;
+  state.agents[1].x += 0.41;
+  state.agents[1].y += 0.59;
+  state.agents[1].walkFrame = 2.1;
+
+  state.agents[2].houseId = house.id;
+  state.agents[2].taskType = 'sleep';
+  state.agents[2].x = house.x;
+  state.agents[2].y = house.y + 12;
+
+  state.agents[3].job = 'Pescador';
+  state.agents[3].taskType = 'fish_river';
+  state.agents[3].x = dock.x + 14;
+  state.agents[3].y = dock.y - 10;
+
+  state.animals.forEach((an, idx) => {
+    an.x += 0.27;
+    an.y += 0.73;
+    an.walkFrame = idx * 0.7;
+  });
+
+  const { ctx, ops } = createMockCanvasContext();
+  drawAdultVillager(ctx, state.agents[0], state.agents[0].id, 1.2);
+  drawAdultVillager(ctx, state.agents[3], null, 1.2);
+  drawFishingRipple(ctx, state.agents[3], 1.2);
+  drawChildVillager(ctx, state.agents[1], state.agents[1].id, 1.2);
+  drawWildlifeAnimals(ctx, state.animals, state.selectedEntity, 1.2);
+  drawBuildingOccupantHeads(ctx, state);
+
+  const rectOps = ops.filter((o) => o.op === 'fillRect' || o.op === 'strokeRect');
+  assert.ok(rectOps.length > 80);
+  const nonIntegerRects = rectOps.filter((o) => o.args.some((v) => !Number.isInteger(v)));
+  assert.equal(
+    nonIntegerRects.length,
+    0,
+    `Expected all character/wildlife/badge fillRect/strokeRect coords to be integers, found: ${JSON.stringify(nonIntegerRects.slice(0, 3))}`
+  );
+  assert.equal(
+    ops.filter((o) => o.op === 'ellipse').length,
+    0,
+    '16-bit fishing ripple and sprites should use crisp pixel rects rather than smooth ellipses'
+  );
+});
+

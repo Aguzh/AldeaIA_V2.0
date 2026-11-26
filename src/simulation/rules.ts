@@ -5,6 +5,7 @@ import type {
   AnimalType,
   BankLoan,
   BiomeType,
+  BuildingOccupantBadge,
   ConstructionOperationType,
   DaySnapshot,
   DiseaseId,
@@ -2978,6 +2979,8 @@ export function runQwenRepresentativeAutonomousTurn(state: SimulationState): str
   rep.qwenPlan = `Representante Qwen 2.5: ${goal}`;
   rep.lastQwenDecision = `Qwen 2.5:3b dirigiendo como Representante (${goal}).`;
   rep.thought = `Como Representante coordinado por Qwen 2.5:3b, priorizo: ${goal}.`;
+  const styleNotes = applyQwenAutonomousStylingTurn(state, 1);
+  if (styleNotes.length > 0) executed.push(...styleNotes);
   syncSpecialBuildingStaff(state);
   return executed;
 }
@@ -3701,6 +3704,7 @@ export function advanceDayAging(
       if (agent.job === 'Aprendiz') {
         decideVillagerMajorAction(state, agent, 'adult_job');
       }
+      assignQwenAppearanceSetup(state, agent, { reason: 'mayoría de edad', preserveSkin: true });
       addLog(state, `${agent.name} cumplió ${AGE_ADULT_YEARS} años y asumió el oficio de ${agent.job}.`, 'sky');
     }
 
@@ -3808,6 +3812,10 @@ export function advanceDayAging(
         bornBaby.traits = inheritTraitsFromParents(agent, father, bornBaby.id);
         bornBaby.memories = [];
         applyGenerationAptitude(bornBaby, agent, father);
+        assignQwenAppearanceSetup(state, bornBaby, {
+          reason: 'nacimiento',
+          parents: [agent, father],
+        });
         recordAgentMemory(state, bornBaby, 'family', `Nací en la generación ${bornBaby.generation ?? 2}.`, 'positive');
         recordAgentMemory(state, agent, 'family', `Nació mi hijo/a ${bornBaby.name}.`, 'positive', bornBaby.name);
         if (father) {
@@ -4266,6 +4274,178 @@ function isSpotClear(
   if (state.specialBuildings.some((b) => Math.hypot(cx - b.x, cy - b.y) < minDistSpecial)) return false;
   if (state.farms.some((f) => Math.hypot(cx - f.x, cy - f.y) < minDistFarm)) return false;
   return true;
+}
+
+export interface StructureObstacleBounds {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+}
+
+export function getHouseObstacleBounds(h: House, pad = 6): StructureObstacleBounds {
+  const halfW = h.size === 'large' ? 30 : h.size === 'medium' ? 23 : 17;
+  const topH = h.size === 'large' ? 23 : h.size === 'medium' ? 18 : 15;
+  const bottomH = h.size === 'large' ? 16 : h.size === 'medium' ? 13 : 11;
+  return {
+    minX: h.x - halfW - pad,
+    maxX: h.x + halfW + pad,
+    minY: h.y - topH - pad,
+    maxY: h.y + bottomH + pad,
+  };
+}
+
+export function getFarmObstacleBounds(f: FarmPlot, pad = 6): StructureObstacleBounds {
+  const halfW = (f.size === 'large' ? 30 : f.size === 'medium' ? 22 : 15) + 3;
+  const halfH = (f.size === 'large' ? 20 : f.size === 'medium' ? 14 : 10) + 3;
+  return {
+    minX: f.x - halfW - pad,
+    maxX: f.x + halfW + pad,
+    minY: f.y - halfH - pad,
+    maxY: f.y + halfH + pad,
+  };
+}
+
+export function getSpecialBuildingObstacleBounds(
+  b: SpecialBuilding,
+  pad = 6
+): StructureObstacleBounds {
+  const halfW =
+    b.type === 'market' || b.type === 'bank' || b.type === 'infirmary' || b.type === 'town_hall'
+      ? 34
+      : 29;
+  const topH = b.type === 'dock' ? 26 : 24;
+  const bottomH = 19;
+  return {
+    minX: b.x - halfW - pad,
+    maxX: b.x + halfW + pad,
+    minY: b.y - topH - pad,
+    maxY: b.y + bottomH + pad,
+  };
+}
+
+function isInsideBounds(x: number, y: number, b: StructureObstacleBounds): boolean {
+  return x >= b.minX && x <= b.maxX && y >= b.minY && y <= b.maxY;
+}
+
+export function isPointBlockedByStructures(
+  state: SimulationState,
+  x: number,
+  y: number,
+  pad = 8,
+  includeSpecialBuildings = true
+): boolean {
+  for (const h of state.houses) {
+    if (isInsideBounds(x, y, getHouseObstacleBounds(h, pad))) return true;
+  }
+  for (const f of state.farms) {
+    if (isInsideBounds(x, y, getFarmObstacleBounds(f, pad))) return true;
+  }
+  if (includeSpecialBuildings) {
+    for (const b of state.specialBuildings) {
+      if (isInsideBounds(x, y, getSpecialBuildingObstacleBounds(b, pad))) return true;
+    }
+    if (state.plaza) {
+      const plazaBounds: StructureObstacleBounds = {
+        minX: state.plaza.x - 62 - pad,
+        maxX: state.plaza.x + 62 + pad,
+        minY: state.plaza.y - 46 - pad,
+        maxY: state.plaza.y + 46 + pad,
+      };
+      if (isInsideBounds(x, y, plazaBounds)) return true;
+    }
+  }
+  return false;
+}
+
+export function findNearestClearGroundSpot(
+  state: SimulationState,
+  x: number,
+  y: number,
+  pad = 10,
+  includeSpecialBuildings = true
+): { x: number; y: number } {
+  const bridgeX = state.bridge?.x ?? null;
+  const preferNorth = y < RIVER_TOP_Y;
+  const clampLand = (cx: number, cy: number): { x: number; y: number } => {
+    const lx = clamp(cx, 28, CANVAS_WIDTH - 28);
+    let ly = clamp(cy, NORTH_LAND_MIN_Y + 8, CANVAS_HEIGHT - 28);
+    if (isPointInRiverWater(lx, ly, bridgeX)) {
+      ly = preferNorth ? NORTH_LAND_MAX_Y - 10 : SAFE_LAND_MIN_Y + 12;
+    }
+    return { x: Math.round(lx), y: Math.round(ly) };
+  };
+
+  const initial = clampLand(x, y);
+  if (
+    !isPointInRiverWater(initial.x, initial.y, bridgeX) &&
+    !isPointBlockedByStructures(state, initial.x, initial.y, pad, includeSpecialBuildings)
+  ) {
+    return initial;
+  }
+
+  for (let radius = 16; radius <= 260; radius += 14) {
+    const steps = 16;
+    for (let i = 0; i < steps; i++) {
+      const angle = (i / steps) * Math.PI * 2;
+      const cand = clampLand(initial.x + Math.cos(angle) * radius, initial.y + Math.sin(angle) * radius);
+      if (
+        !isPointInRiverWater(cand.x, cand.y, bridgeX) &&
+        !isPointBlockedByStructures(state, cand.x, cand.y, pad, includeSpecialBuildings)
+      ) {
+        return cand;
+      }
+    }
+  }
+
+  return initial;
+}
+
+export function resolveAnimalObstacleStep(
+  state: SimulationState,
+  curX: number,
+  curY: number,
+  nextX: number,
+  nextY: number,
+  pad = 8
+): { x: number; y: number; blocked: boolean } {
+  const bridgeX = state.bridge?.x ?? null;
+  const valid = (px: number, py: number) =>
+    !isPointInRiverWater(px, py, bridgeX) &&
+    !isPointBlockedByStructures(state, px, py, pad, true);
+
+  if (valid(nextX, nextY)) {
+    return { x: nextX, y: nextY, blocked: false };
+  }
+  if (valid(nextX, curY)) {
+    return { x: nextX, y: curY, blocked: true };
+  }
+  if (valid(curX, nextY)) {
+    return { x: curX, y: nextY, blocked: true };
+  }
+  if (valid(curX, curY)) {
+    return { x: curX, y: curY, blocked: true };
+  }
+  const escaped = findNearestClearGroundSpot(state, curX, curY, pad + 2, true);
+  return { x: escaped.x, y: escaped.y, blocked: true };
+}
+
+export function relocateBlockedResourcesAndAnimals(state: SimulationState): void {
+  for (const r of state.resources) {
+    if (isPointBlockedByStructures(state, r.x, r.y, 10, true)) {
+      const clear = findNearestClearGroundSpot(state, r.x, r.y, 12, true);
+      r.x = clear.x;
+      r.y = clear.y;
+    }
+  }
+  for (const a of state.animals) {
+    if (a.type === 'fish' || (a.type === 'horse' && a.riderId !== null)) continue;
+    if (isPointBlockedByStructures(state, a.x, a.y, 8, true)) {
+      const clear = findNearestClearGroundSpot(state, a.x, a.y, 10, true);
+      a.x = clear.x;
+      a.y = clear.y;
+    }
+  }
 }
 
 export function chooseQwenBuildSpot(
@@ -4980,6 +5160,7 @@ export function completeActiveConstruction(state: SimulationState, builder: Agen
   const prevEra = state.era;
   state.era = computeEra(state.knowledge, state.houses);
   if (completed) {
+    relocateBlockedResourcesAndAnimals(state);
     trackNaturalProgress(state, 'constructions', 1);
     recordAgentMemory(state, builder, 'work', `Completé obra (${ac.kind})`, 'positive');
     archiveChronicleEvent(state, 'natural', `${builder.name} completó obra (${ac.kind}).`);
@@ -5269,8 +5450,12 @@ export function createAnimal(
     }
   }
 
-  if (!isFish && isPointInRiverWater(ax, ay, state.bridge?.x ?? null)) {
-    ay = SAFE_LAND_MIN_Y + 24;
+  let finalX = ax;
+  let finalY = ay;
+  if (!isFish) {
+    const clear = findNearestClearGroundSpot(state, ax, ay, 10, true);
+    finalX = clear.x;
+    finalY = clear.y;
   }
 
   const fishVariant = isFish ? variant ?? FISH_VARIANTS[id % FISH_VARIANTS.length] : undefined;
@@ -5280,8 +5465,8 @@ export function createAnimal(
     id,
     type,
     name: `${ANIMAL_LABELS[type].split(' ')[0]} #${id}`,
-    x: Math.round(ax),
-    y: Math.round(ay),
+    x: Math.round(finalX),
+    y: Math.round(finalY),
     vx: (Math.random() - 0.5) * 0.7 || 0.35,
     vy: isFish ? 0 : (Math.random() - 0.5) * 0.4,
     hostile: isHostile,
@@ -6616,6 +6801,22 @@ export function sanitizeQwenActions(rawActions: unknown): QwenAction[] {
       case 'RUN_CARAVANS':
         safe.push({ type });
         break;
+      case 'STYLE_VILLAGERS': {
+        const validStyles: Agent['hairStyle'][] = ['short', 'long', 'mohawk', 'curly', 'ponytail', 'bald'];
+        const isHex = (v: unknown): v is string => typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
+        safe.push({
+          type: 'STYLE_VILLAGERS',
+          targetName: typeof raw.targetName === 'string' ? raw.targetName.trim().slice(0, 60) : undefined,
+          shirt: isHex(raw.shirt) ? raw.shirt : undefined,
+          hairStyle:
+            typeof raw.hairStyle === 'string' && validStyles.includes(raw.hairStyle as Agent['hairStyle'])
+              ? (raw.hairStyle as Agent['hairStyle'])
+              : undefined,
+          hairColor: isHex(raw.hairColor) ? raw.hairColor : undefined,
+          skin: isHex(raw.skin) ? raw.skin : undefined,
+        });
+        break;
+      }
     }
   }
 
@@ -6711,6 +6912,33 @@ export function applyQwenActions(
         }
         executed.push(`${dispatched} caravana(s) despachada(s)`);
         addLog(state, `Qwen 2.5 despachó ${dispatched} caravana(s) comerciales.`, 'sky');
+        break;
+      }
+      case 'STYLE_VILLAGERS': {
+        const targets = action.targetName
+          ? state.agents.filter(
+              (a) =>
+                a.name.toLowerCase() === action.targetName!.toLowerCase() ||
+                a.name.toLowerCase().startsWith(action.targetName!.split(' ')[0].toLowerCase())
+            )
+          : state.agents;
+        let styled = 0;
+        for (const ag of targets) {
+          if (action.shirt || action.hairStyle || action.hairColor || action.skin) {
+            if (action.shirt) ag.shirt = action.shirt;
+            if (action.hairStyle) ag.hairStyle = action.hairStyle;
+            if (action.hairColor) ag.hairColor = action.hairColor;
+            if (action.skin) ag.skin = action.skin;
+            ag.lastQwenDecision = 'Qwen 2.5:3b renovó tu vestimenta y apariencia.';
+          } else {
+            assignQwenAppearanceSetup(state, ag, { reason: 'estilismo Qwen 2.5', preserveSkin: false });
+          }
+          styled++;
+        }
+        executed.push(styled > 0 ? `${styled} aldeano(s) estilizado(s)` : 'Sin aldeanos coincidentes');
+        if (styled > 0) {
+          addLog(state, `Qwen 2.5:3b definió nuevos estilos de vestimenta/pelo para ${styled} aldeano(s).`, 'violet');
+        }
         break;
       }
       case 'KILL_CROPS': {
@@ -7488,11 +7716,13 @@ export function applyQwenActions(
             : action.resource === 'wood'
               ? 40 + Math.random() * (FOREST_MAX_X - 70)
               : 120 + Math.random() * (CANVAS_WIDTH - 240);
+          const rawY = SAFE_LAND_MIN_Y + 12 + Math.random() * (CANVAS_HEIGHT - SAFE_LAND_MIN_Y - 50);
+          const clearSpot = findNearestClearGroundSpot(state, rx, rawY, 12, true);
           state.resources.push({
             id: state.nextId++,
             type: action.resource,
-            x: rx,
-            y: SAFE_LAND_MIN_Y + 12 + Math.random() * (CANVAS_HEIGHT - SAFE_LAND_MIN_Y - 50),
+            x: clearSpot.x,
+            y: clearSpot.y,
             amount: 6,
             maxAmount: 6,
             depleted: false,
@@ -7850,6 +8080,7 @@ export function migrateAndRecoverVillageState(state: SimulationState): {
   }
 
   // Asegurar Representante permanente bajo Qwen 2.5:3b
+  relocateBlockedResourcesAndAnimals(state);
   const rep = ensureQwenControlledRepresentative(state);
   if (rep) {
     runQwenRepresentativeAutonomousTurn(state);
@@ -7895,4 +8126,300 @@ export function migrateAndRecoverVillageState(state: SimulationState): {
 
   return { migrated, rescued, notes };
 }
+
+export const QWEN_SKIN_TONES = ['#fde2c4', '#f5cba7', '#e0ac69', '#c68642', '#9f6334', '#784421'] as const;
+export const QWEN_HAIR_STYLES: Agent['hairStyle'][] = ['short', 'long', 'mohawk', 'curly', 'ponytail', 'bald'];
+export const QWEN_HAIR_COLORS = ['#181412', '#4a2c18', '#8c5229', '#d4a359', '#b84228', '#cbd5e1', '#2563eb', '#7c3aed'] as const;
+export const QWEN_SHIRT_PALETTE = [
+  '#3b82f6',
+  '#2563eb',
+  '#ef4444',
+  '#dc2626',
+  '#10b981',
+  '#059669',
+  '#f59e0b',
+  '#d97706',
+  '#8b5cf6',
+  '#ec4899',
+  '#06b6d4',
+  '#14b8a6',
+  '#f97316',
+  '#6366f1',
+] as const;
+
+const QWEN_JOB_OUTFIT_PALETTES: Partial<Record<JobType, readonly string[]>> = {
+  Agricultor: ['#10b981', '#059669', '#84cc16', '#d97706'],
+  Recolector: ['#10b981', '#14b8a6', '#f59e0b', '#84cc16'],
+  Leñador: ['#dc2626', '#b45309', '#059669', '#f97316'],
+  Minero: ['#2563eb', '#d97706', '#f97316', '#475569'],
+  Constructor: ['#f59e0b', '#ea580c', '#2563eb', '#d97706'],
+  Carpintero: ['#d97706', '#92400e', '#10b981', '#3b82f6'],
+  Pescador: ['#06b6d4', '#2563eb', '#14b8a6', '#f59e0b'],
+  Panadero: ['#f59e0b', '#ef4444', '#ec4899', '#d97706'],
+  Herrero: ['#dc2626', '#ea580c', '#7c3aed', '#334155'],
+  Artesano: ['#ec4899', '#8b5cf6', '#14b8a6', '#f97316'],
+  Comerciante: ['#6366f1', '#8b5cf6', '#059669', '#ec4899'],
+  Banquero: ['#2563eb', '#6366f1', '#1e293b', '#8b5cf6'],
+  Curandero: ['#14b8a6', '#10b981', '#06b6d4', '#3b82f6'],
+  Boticario: ['#14b8a6', '#8b5cf6', '#059669', '#06b6d4'],
+  Erudito: ['#6366f1', '#7c3aed', '#2563eb', '#0f766e'],
+  Maestro: ['#7c3aed', '#2563eb', '#dc2626', '#059669'],
+  Comisario: ['#2563eb', '#1d4ed8', '#3b82f6', '#475569'],
+  Guardián: ['#dc2626', '#b91c1c', '#2563eb', '#ea580c'],
+  Alcalde: ['#7c3aed', '#2563eb', '#d97706', '#dc2626'],
+  Aprendiz: ['#3b82f6', '#ec4899', '#10b981', '#f59e0b'],
+};
+
+function pickLeastUsedOption<T extends string>(
+  pool: readonly T[],
+  existingValues: string[],
+  seed: number
+): T {
+  const counts = new Map<string, number>();
+  for (const val of existingValues) {
+    counts.set(val, (counts.get(val) ?? 0) + 1);
+  }
+  let best = pool[Math.abs(seed) % pool.length];
+  let bestScore = Infinity;
+  for (let i = 0; i < pool.length; i++) {
+    const candidate = pool[(Math.abs(seed) + i) % pool.length];
+    const score = (counts.get(candidate) ?? 0) * 10 + i * 0.01;
+    if (score < bestScore) {
+      bestScore = score;
+      best = candidate;
+    }
+  }
+  return best;
+}
+
+/**
+ * Qwen 2.5:3b elige combinaciones variadas y coherentes de vestimenta, pelo y tono de piel
+ * considerando oficio, rasgos, genética familiar (si nace) y diversidad global de la aldea.
+ */
+export function assignQwenAppearanceSetup(
+  state: SimulationState,
+  agent: Agent,
+  options?: {
+    reason?: string;
+    preserveSkin?: boolean;
+    parents?: [Agent | null, Agent | null];
+  }
+): string {
+  const others = state.agents.filter((a) => a.id !== agent.id);
+  const seed = agent.id * 7 + state.day * 3 + agent.ageYears;
+
+  if (!options?.preserveSkin) {
+    const p1 = options?.parents?.[0];
+    const p2 = options?.parents?.[1];
+    if (p1 || p2) {
+      const parentSkins = [p1?.skin, p2?.skin].filter((s): s is string => Boolean(s));
+      const baseIdx = QWEN_SKIN_TONES.indexOf(
+        (parentSkins[agent.id % parentSkins.length] ?? QWEN_SKIN_TONES[0]) as (typeof QWEN_SKIN_TONES)[number]
+      );
+      const delta = agent.id % 3 === 0 ? 1 : agent.id % 3 === 1 ? -1 : 0;
+      const idx = clamp((baseIdx >= 0 ? baseIdx : 2) + delta, 0, QWEN_SKIN_TONES.length - 1);
+      agent.skin = QWEN_SKIN_TONES[idx];
+    } else {
+      agent.skin = pickLeastUsedOption(
+        QWEN_SKIN_TONES,
+        others.map((a) => a.skin),
+        seed
+      );
+    }
+  }
+
+  const jobPool = QWEN_JOB_OUTFIT_PALETTES[agent.job] ?? QWEN_SHIRT_PALETTE;
+  const seasonalPool =
+    state.season === 'Invierno'
+      ? [...jobPool, '#2563eb', '#dc2626', '#6366f1']
+      : state.season === 'Primavera'
+        ? [...jobPool, '#10b981', '#ec4899', '#06b6d4']
+        : jobPool;
+  agent.shirt = pickLeastUsedOption(
+    seasonalPool,
+    others.map((a) => a.shirt),
+    seed + 5
+  );
+
+  const hairPool: Agent['hairStyle'][] = agent.isChild
+    ? ['short', 'long', 'curly', 'ponytail']
+    : agent.sex === 'F'
+      ? ['long', 'ponytail', 'curly', 'short']
+      : ['short', 'curly', 'mohawk', 'ponytail', 'bald', 'long'];
+  agent.hairStyle = pickLeastUsedOption(
+    hairPool,
+    others.map((a) => a.hairStyle),
+    seed + 11
+  );
+
+  const p1 = options?.parents?.[0];
+  const p2 = options?.parents?.[1];
+  const naturalHairPalette = QWEN_HAIR_COLORS.slice(0, 6);
+  const fullHairPalette =
+    agent.traits?.includes('curioso') || agent.id % 9 === 0
+      ? QWEN_HAIR_COLORS
+      : naturalHairPalette;
+  if ((p1 || p2) && agent.id % 2 === 0) {
+    agent.hairColor = p1?.hairColor ?? p2?.hairColor ?? fullHairPalette[seed % fullHairPalette.length];
+  } else {
+    agent.hairColor = pickLeastUsedOption(
+      fullHairPalette,
+      others.map((a) => a.hairColor),
+      seed + 17
+    );
+  }
+
+  const reason = options?.reason ?? 'criterio visual de aldea';
+  const summary = `Qwen 2.5:3b estilizó a ${agent.name} (${agent.hairStyle}, vestimenta ${agent.shirt}, ${reason})`;
+  agent.lastQwenDecision = summary;
+  return summary;
+}
+
+export function applyQwenAutonomousStylingTurn(
+  state: SimulationState,
+  maxUpdates = 2
+): string[] {
+  if (state.agents.length === 0) return [];
+  const notes: string[] = [];
+  let updated = 0;
+
+  // Asegurar diversidad de vestimenta/pelo sin cambiar la piel existente en adultos establecidos
+  const shirtCounts = new Map<string, number>();
+  for (const a of state.agents) {
+    shirtCounts.set(a.shirt, (shirtCounts.get(a.shirt) ?? 0) + 1);
+  }
+
+  for (const ag of state.agents) {
+    if (updated >= maxUpdates) break;
+    const duplicates = shirtCounts.get(ag.shirt) ?? 0;
+    const needsSeasonalRefresh =
+      duplicates >= 3 || (state.day % 12 === 0 && (ag.id + state.day) % Math.max(3, state.agents.length) === 0);
+    if (needsSeasonalRefresh) {
+      shirtCounts.set(ag.shirt, Math.max(0, duplicates - 1));
+      assignQwenAppearanceSetup(state, ag, {
+        reason: `temporada ${state.season} / ${ag.job}`,
+        preserveSkin: true,
+      });
+      shirtCounts.set(ag.shirt, (shirtCounts.get(ag.shirt) ?? 0) + 1);
+      notes.push(`Estilo ${ag.name}`);
+      updated++;
+    }
+  }
+  return notes;
+}
+
+export function getBuildingOccupancySnapshot(state: SimulationState): {
+  badges: BuildingOccupantBadge[];
+  insideAgentIds: Set<number>;
+} {
+  const badges: BuildingOccupantBadge[] = [];
+  const insideAgentIds = new Set<number>();
+
+  // 1. Casas ocupadas por aldeanos que descansan o guardan bienes dentro
+  for (const house of state.houses) {
+    const occupants = state.agents.filter(
+      (a) =>
+        !insideAgentIds.has(a.id) &&
+        a.houseId === house.id &&
+        a.jailedDays <= 0 &&
+        ((a.taskType === 'sleep' && Math.hypot(a.x - house.x, a.y - (house.y + 12)) <= 26) ||
+          (a.taskType === 'store_home' && Math.hypot(a.x - house.x, a.y - (house.y + 10)) <= 20))
+    );
+    if (occupants.length === 0) continue;
+
+    const bottomY = Math.round(
+      house.y + (house.size === 'large' ? 16 : house.size === 'medium' ? 13 : 11)
+    );
+    const step = occupants.length > 4 ? 10 : 12;
+    const startX = house.x - ((occupants.length - 1) * step) / 2;
+    occupants.forEach((ag, idx) => {
+      insideAgentIds.add(ag.id);
+      badges.push({
+        agentId: ag.id,
+        buildingKind: 'house',
+        buildingId: house.id,
+        x: Math.round(startX + idx * step),
+        y: bottomY,
+      });
+    });
+  }
+
+  // 2. Edificios especiales (comercios, banco, comisaría, cárcel, escuela, etc.), EXCLUYENDO el Muelle ('dock')
+  const prisons = state.specialBuildings.filter((b) => b.type === 'prison');
+  for (const b of state.specialBuildings) {
+    if (b.type === 'dock') continue;
+
+    let occupants: Agent[] = [];
+    if (b.type === 'prison') {
+      occupants = state.agents.filter((a) => {
+        if (insideAgentIds.has(a.id) || a.jailedDays <= 0) return false;
+        if (prisons.length <= 1) return true;
+        let closest = prisons[0];
+        let bestD = Math.hypot(a.x - closest.x, a.y - closest.y);
+        for (const p of prisons) {
+          const d = Math.hypot(a.x - p.x, a.y - p.y);
+          if (d < bestD) {
+            bestD = d;
+            closest = p;
+          }
+        }
+        return closest.id === b.id;
+      });
+    } else {
+      occupants = state.agents.filter((a) => {
+        if (insideAgentIds.has(a.id) || a.jailedDays > 0) return false;
+        if (a.taskType === 'manage_building' && a.assignedBuildingId === b.id) {
+          return Math.hypot(a.x - b.x, a.y - (b.y + 12)) <= 30;
+        }
+        if (a.taskType === 'trade') {
+          const nearBuilding = Math.hypot(a.x - b.x, a.y - b.y) <= 28;
+          if (!nearBuilding) return false;
+          if (a.assignedBuildingId !== null) return a.assignedBuildingId === b.id;
+          return (
+            b.type === 'market' ||
+            b.type === 'bank' ||
+            b.type === 'bakery' ||
+            b.type === 'carpentry' ||
+            b.type === 'forge' ||
+            b.type === 'apothecary'
+          );
+        }
+        if (a.taskType === 'craft_tools' && (b.type === 'forge' || b.type === 'carpentry')) {
+          return Math.hypot(a.x - b.x, a.y - (b.y + 10)) <= 28;
+        }
+        if (a.taskType === 'research' && b.type === 'school') {
+          return Math.hypot(a.x - b.x, a.y - b.y) <= 32;
+        }
+        return false;
+      });
+    }
+
+    if (occupants.length === 0) continue;
+    const bottomY = Math.round(b.y + (b.isOperational ? 16 : 11));
+    const step = occupants.length > 4 ? 10 : 12;
+    const startX = b.x - ((occupants.length - 1) * step) / 2;
+    occupants.forEach((ag, idx) => {
+      insideAgentIds.add(ag.id);
+      badges.push({
+        agentId: ag.id,
+        buildingKind: 'special',
+        buildingId: b.id,
+        buildingType: b.type,
+        x: Math.round(startX + idx * step),
+        y: bottomY,
+      });
+    });
+  }
+
+  return { badges, insideAgentIds };
+}
+
+export function getBuildingOccupantHeadBadges(state: SimulationState): BuildingOccupantBadge[] {
+  return getBuildingOccupancySnapshot(state).badges;
+}
+
+export function getInsideBuildingAgentIds(state: SimulationState): Set<number> {
+  return getBuildingOccupancySnapshot(state).insideAgentIds;
+}
+
 

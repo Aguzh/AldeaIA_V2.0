@@ -7,6 +7,7 @@ import {
   applyQwenActions,
   assignBalancedJob,
   assignMentorships,
+  assignQwenAppearanceSetup,
   buildQwenVillageTelemetry,
   canAgentRest,
   canAgentsReproduce,
@@ -40,6 +41,7 @@ import {
   ensureQwenControlledRepresentative,
   ERA_METADATA,
   extinguishFire,
+  findNearestClearGroundSpot,
   FISH_VARIANTS,
   FOREST_MAX_X,
   generateEmergentDialogue,
@@ -75,6 +77,7 @@ import {
   recordDailySnapshot,
   recordResourceOperation,
   repairDamagedStructures,
+  resolveAnimalObstacleStep,
   resolvePetitionWithQwen,
   RIVER_BOTTOM_Y,
   RIVER_FISH_RESTOCK_DAYS,
@@ -278,6 +281,7 @@ export function spawnSettlers(state: SimulationState, count: number): number {
     );
     settler.coins = mintBackedCoins(state, 12);
     decideVillagerMajorAction(state, settler, 'adult_job');
+    assignQwenAppearanceSetup(state, settler, { reason: 'llegada de colono' });
     const openHouse = state.houses.find(
       (h) => state.agents.filter((a) => a.houseId === h.id).length < h.capacity
     );
@@ -299,17 +303,18 @@ export function spawnResource(
   bypassPause = false
 ): boolean {
   if (state.resourcesPaused && !bypassPause) return false;
-  const finalX = clamp(x, 30, CANVAS_WIDTH - 30);
-  let finalY = clamp(y, NORTH_LAND_MIN_Y + 6, CANVAS_HEIGHT - 30);
-  if (isPointInRiverWater(finalX, finalY, state.bridge?.x ?? null)) {
-    finalY = SAFE_LAND_MIN_Y + 12;
+  const clampedX = clamp(x, 30, CANVAS_WIDTH - 30);
+  let clampedY = clamp(y, NORTH_LAND_MIN_Y + 6, CANVAS_HEIGHT - 30);
+  if (isPointInRiverWater(clampedX, clampedY, state.bridge?.x ?? null)) {
+    clampedY = SAFE_LAND_MIN_Y + 12;
   }
+  const clearSpot = findNearestClearGroundSpot(state, clampedX, clampedY, 12, true);
   const maxAmt = 8;
   state.resources.push({
     id: state.nextId++,
     type,
-    x: finalX,
-    y: finalY,
+    x: clearSpot.x,
+    y: clearSpot.y,
     amount: maxAmt,
     maxAmount: maxAmt,
     depleted: false,
@@ -451,8 +456,9 @@ export function createInitialState(): SimulationState {
 
   for (const agent of state.agents) {
     agent.job = assignBalancedJob(agent, state.agents, state.houses, state.policies, state.specialBuildings);
+    assignQwenAppearanceSetup(state, agent, { reason: 'vestimenta y estilo inicial' });
     agent.qwenPlan = `Juntar recursos como ${agent.job} para levantar las primeras casas`;
-    agent.lastQwenDecision = `Qwen 2.5 asignó misión inicial ${agent.job}.`;
+    agent.lastQwenDecision = `Qwen 2.5 asignó misión inicial ${agent.job} y definió su estilo visual.`;
   }
 
   const forestTypes: ResourceNode['type'][] = ['wood', 'wood', 'pine_wood', 'maple_wood', 'oak_wood', 'food'];
@@ -1195,7 +1201,6 @@ function tickAnimals(state: SimulationState, dt: number): void {
     createAnimal(state, 'fish');
   }
 
-  const bridgeX = isBridgePassable(state) ? state.bridge!.x : null;
   for (const animal of state.animals) {
     if (animal.cooldown > 0) animal.cooldown = Math.max(0, animal.cooldown - dt);
     if (animal.type === 'cow') animal.milkReady = clamp(animal.milkReady + 0.06 * dt, 0, 100);
@@ -1235,10 +1240,9 @@ function tickAnimals(state: SimulationState, dt: number): void {
         const d = Math.hypot(dx, dy) || 1;
         const nx = animal.x + (dx / d) * 1.2 * dt;
         const ny = animal.y + (dy / d) * 1.2 * dt;
-        if (!isPointInRiverWater(nx, ny, bridgeX)) {
-          animal.x = nx;
-          animal.y = ny;
-        }
+        const stepPos = resolveAnimalObstacleStep(state, animal.x, animal.y, nx, ny, 8);
+        animal.x = stepPos.x;
+        animal.y = stepPos.y;
         if (d < 24 && predator.cooldown <= 0) {
           predator.cooldown = 55;
           predator.vx = Math.sign(predator.x - WORLD_CENTER_X || 1) * 1.4;
@@ -1261,10 +1265,9 @@ function tickAnimals(state: SimulationState, dt: number): void {
           const chaseSpeed = animal.type === 'wildcat' ? 0.95 : 0.72;
           const nx = animal.x + (dx / d) * chaseSpeed * dt;
           const ny = animal.y + (dy / d) * chaseSpeed * dt;
-          if (!isPointInRiverWater(nx, ny, bridgeX)) {
-            animal.x = nx;
-            animal.y = ny;
-          }
+          const stepPos = resolveAnimalObstacleStep(state, animal.x, animal.y, nx, ny, 8);
+          animal.x = stepPos.x;
+          animal.y = stepPos.y;
           if (d < 20) {
             const canTame =
               !targetAgent.isChild &&
@@ -1300,13 +1303,16 @@ function tickAnimals(state: SimulationState, dt: number): void {
       animal.vx = (Math.random() - 0.5) * (animal.type === 'horse' ? 1.1 : 0.65);
       animal.vy = (Math.random() - 0.5) * 0.55;
     }
-    const nx = clamp(animal.x + animal.vx * dt, 24, CANVAS_WIDTH - 24);
-    const ny = clamp(animal.y + animal.vy * dt, NORTH_LAND_MIN_Y + 4, CANVAS_HEIGHT - 24);
-    if (!isPointInRiverWater(nx, ny, bridgeX)) {
-      animal.x = nx;
-      animal.y = ny;
-    } else {
-      animal.vy = -animal.vy;
+    const prevX = animal.x;
+    const prevY = animal.y;
+    const nx = clamp(prevX + animal.vx * dt, 24, CANVAS_WIDTH - 24);
+    const ny = clamp(prevY + animal.vy * dt, NORTH_LAND_MIN_Y + 4, CANVAS_HEIGHT - 24);
+    const stepPos = resolveAnimalObstacleStep(state, prevX, prevY, nx, ny, 8);
+    animal.x = stepPos.x;
+    animal.y = stepPos.y;
+    if (stepPos.blocked) {
+      if (Math.abs(stepPos.x - prevX) < 0.05) animal.vx = -animal.vx;
+      if (Math.abs(stepPos.y - prevY) < 0.05) animal.vy = -animal.vy;
     }
     animal.walkFrame += 0.12 * dt;
   }
@@ -1823,7 +1829,9 @@ export function tickSimulation(state: SimulationState, elapsedSeconds = 1 / 60):
           agent.taskTimer = 0;
           break;
         }
-        const dist = moveTowards(agent, b.x, b.y + 12, moveSpeed, dt, currentBridgeX);
+        const targetX = b.type === 'dock' ? b.x + 14 : b.x;
+        const targetY = b.type === 'dock' ? b.y - 10 : b.y + 12;
+        const dist = moveTowards(agent, targetX, targetY, moveSpeed, dt, currentBridgeX);
         if (dist <= 26 && agent.taskTimer <= 5) {
           const eff = b.efficiencyMultiplier ?? 1;
           if (!b.isOperational || eff <= 0) {
@@ -1884,8 +1892,8 @@ export function tickSimulation(state: SimulationState, elapsedSeconds = 1 / 60):
         const rawBankX = currentBridgeX ? currentBridgeX + 76 : clamp(agent.x, FOREST_MAX_X + 40, MOUNTAIN_MIN_X - 40);
         const blockedByOtherDock =
           !myDock && state.specialBuildings.some((b) => b.type === 'dock' && Math.abs(b.x - rawBankX) < 55);
-        const tx = myDock ? myDock.x : blockedByOtherDock ? clamp(rawBankX + 120, FOREST_MAX_X + 40, MOUNTAIN_MIN_X - 40) : rawBankX;
-        const ty = myDock ? myDock.y - 8 : RIVER_BOTTOM_Y + 14;
+        const tx = myDock ? myDock.x + 14 : blockedByOtherDock ? clamp(rawBankX + 120, FOREST_MAX_X + 40, MOUNTAIN_MIN_X - 40) : rawBankX;
+        const ty = myDock ? myDock.y - 10 : RIVER_BOTTOM_Y + 14;
         const dist = moveTowards(agent, tx, ty, moveSpeed, dt, currentBridgeX);
         if (dist <= 22 && agent.taskTimer <= 6) {
           if (state.riverFishStock <= 0) {
@@ -2394,6 +2402,14 @@ export function tickSimulation(state: SimulationState, elapsedSeconds = 1 / 60):
       }
       case 'idle':
       case 'eat': {
+        if (agent.jailedDays > 0) {
+          const prison = state.specialBuildings.find((b) => b.type === 'prison');
+          if (prison) {
+            agent.x = prison.x;
+            agent.y = prison.y + 8;
+          }
+          break;
+        }
         const stayNorth = agent.y < RIVER_TOP_Y && currentBridgeX === null;
         const anchorX = state.plaza && !stayNorth ? state.plaza.x : WORLD_CENTER_X;
         const anchorY = stayNorth ? NORTH_CENTER_Y : state.plaza ? state.plaza.y : SOUTH_CENTER_Y;
@@ -2678,6 +2694,7 @@ Responde EXCLUSIVAMENTE un JSON válido con:
     { "type": "FORM_MENTORSHIPS" },
     { "type": "REPAIR_BUILDINGS" },
     { "type": "RUN_CARAVANS" },
+    { "type": "STYLE_VILLAGERS", "targetName": "opcional", "shirt": "#colorHex", "hairStyle": "short|long|mohawk|curly|ponytail|bald", "hairColor": "#colorHex", "skin": "#colorHex" },
     { "type": "BUILD_HOUSES", "count": 2, "zone": "south|north" },
     { "type": "BUILD_PLAZA" },
     { "type": "BUILD_BRIDGE" },

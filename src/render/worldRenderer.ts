@@ -1,7 +1,13 @@
-import { CANVAS_HEIGHT, CANVAS_WIDTH, isNightMinute } from '../simulation/rules';
+import {
+  CANVAS_HEIGHT,
+  CANVAS_WIDTH,
+  getBuildingOccupancySnapshot,
+  isNightMinute,
+} from '../simulation/rules';
 import type { SimulationState } from '../types/simulation';
 import {
   drawAdultVillager,
+  drawBuildingOccupantHeads,
   drawFamilyHighlightOverlay,
   drawFishingRipple,
 } from './adultVillagers';
@@ -36,8 +42,8 @@ export interface CameraView {
 
 /**
  * Coordinador principal de capas visuales del mundo en estética pixel-art 16-bit nítida:
- * terreno (biomas y caminos) -> río -> peces -> puente -> cultivos/edificios/naturaleza ->
- * animales -> aldeanos adultos/niños -> efectos (fuego, clima, iluminación y flotantes).
+ * terreno (biomas y caminos) -> río -> peces -> puente -> cultivos/edificios/ocupantes -> naturaleza ->
+ * animales -> aldeanos adultos/niños visibles -> efectos (fuego, clima, iluminación y flotantes).
  */
 export function renderWorldScene(
   ctx: CanvasRenderingContext2D,
@@ -50,6 +56,7 @@ export function renderWorldScene(
   const shadow = getSunShadowOffset(state.minute, isNight);
   const glintTick = Math.floor(animPhase * 2.5);
 
+  const occupancy = getBuildingOccupancySnapshot(state);
   const occupiedHouseIds = new Set<number>();
   for (const ag of state.agents) {
     if (ag.houseId !== null) occupiedHouseIds.add(ag.houseId);
@@ -76,7 +83,7 @@ export function renderWorldScene(
   drawRiverFish(ctx, state.animals, state.selectedEntity, animPhase);
   drawBridge(ctx, state.bridge, state.selectedEntity?.kind === 'bridge');
 
-  // 5. Cultivos, plaza, casas, edificios especiales y naturaleza
+  // 5. Cultivos, plaza, casas, edificios especiales, cabezas de ocupantes y naturaleza
   drawBuildingsAndFarms(
     ctx,
     state,
@@ -86,18 +93,20 @@ export function renderWorldScene(
     animPhase,
     state.selectedEntity
   );
+  drawBuildingOccupantHeads(ctx, state, occupancy.badges);
   drawForestAndMountains(ctx, state.season, animPhase, shadow);
   drawResourceNodes(ctx, state.resources, animPhase);
 
   // 6. Animales terrestres y fauna del mapa
   drawWildlifeAnimals(ctx, state.animals, state.selectedEntity, animPhase);
 
-  // 7. Aldeanos adultos, ancianos y niños ordenados por profundidad (y)
+  // 7. Aldeanos adultos, ancianos y niños visibles en el exterior (los ocupantes dentro de casas/locales se muestran en el borde inferior del edificio)
   const sortedAgents = [...state.agents].sort((a, b) => a.y - b.y);
   const selAgentId =
     state.selectedEntity?.kind === 'agent' ? state.selectedEntity.id : state.selectedAgentId;
   for (const agent of sortedAgents) {
     drawActiveConstructionScaffolding(ctx, agent, animPhase, glintTick);
+    if (occupancy.insideAgentIds.has(agent.id)) continue;
     drawFishingRipple(ctx, agent, animPhase);
     if (agent.isChild) {
       drawChildVillager(ctx, agent, selAgentId, animPhase);

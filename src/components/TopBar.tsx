@@ -153,7 +153,7 @@ export function TopBar({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+      <div className="flex flex-wrap items-center gap-1.5 min-w-0 max-w-full">
         <div className="flex items-center bg-[#0b1120] border border-slate-800 rounded-lg p-0.5" role="group" aria-label="Velocidad de simulación">
           {([
             { val: 0, label: 'Pausa', hint: 'Pausar simulación' },

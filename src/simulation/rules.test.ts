@@ -9,6 +9,7 @@ import {
   applyBuildingWear,
   applyQwenActions,
   assignMentorships,
+  assignQwenAppearanceSetup,
   BRIDGE_COSTS,
   buildBaseRoads,
   canAgentRest,
@@ -55,6 +56,7 @@ import {
   extinguishFire,
   FISH_VARIANTS,
   FOREST_MAX_X,
+  getBuildingOccupancySnapshot,
   getCompetingBuildingCount,
   getConciseTaskLabel,
   getEmotionWorkMultiplier,
@@ -76,6 +78,7 @@ import {
   isBuildingOperational,
   isNearRoad,
   isNightMinute,
+  isPointBlockedByStructures,
   isPointInRiverWater,
   killAgent,
   killAllCrops,
@@ -102,6 +105,7 @@ import {
   rebalanceBuildingOwnership,
   rebalanceFamilyHousing,
   repairDamagedStructures,
+  resolveAnimalObstacleStep,
   resolvePetition,
   resolvePetitionWithQwen,
   RIVER_BOTTOM_Y,
@@ -1519,4 +1523,118 @@ test('Migración automática de partidas v1/estancadas y rescate anti-extinción
   );
   assert.ok(legacyState.representativeAgentId !== null);
 });
+
+test('Recursos y animales nunca se generan ni atraviesan casas o plantaciones', () => {
+  const state = createInitialState();
+  const house = createHouseNearCenter(state, 'Base', 'south', 'large', 620, 420);
+  const farm = createFarmPlot(state, 'south', 760, 420, 'large');
+
+  // Intentar generar recurso directamente encima de casa y plantación
+  spawnResource(state, 'food', house.x, house.y, true);
+  spawnResource(state, 'wood', farm.x, farm.y, true);
+  const lastTwo = state.resources.slice(-2);
+  for (const r of lastTwo) {
+    assert.equal(
+      isPointBlockedByStructures(state, r.x, r.y, 6, true),
+      false,
+      'Los recursos no deben aparecer sobre casas ni cultivos'
+    );
+  }
+
+  // Intentar generar animal encima de la casa y simular paso hacia la plantación
+  const cow = createAnimal(state, 'cow', house.x, house.y);
+  assert.equal(
+    isPointBlockedByStructures(state, cow.x, cow.y, 6, true),
+    false,
+    'Los animales no deben aparecer dentro de casas'
+  );
+
+  const stepIntoFarm = resolveAnimalObstacleStep(state, farm.x - 60, farm.y, farm.x, farm.y, 8);
+  assert.equal(stepIntoFarm.blocked, true);
+  assert.equal(
+    isPointBlockedByStructures(state, stepIntoFarm.x, stepIntoFarm.y, 6, true),
+    false,
+    'Los animales no deben cruzar por encima de las plantaciones'
+  );
+});
+
+test('Qwen 2.5:3b utiliza múltiples setups de vestimenta, pelo y tono de piel en aldeanos', () => {
+  const state = createInitialState();
+  const uniqueShirts = new Set(state.agents.map((a) => a.shirt));
+  const uniqueSkins = new Set(state.agents.map((a) => a.skin));
+  const uniqueHairStyles = new Set(state.agents.map((a) => a.hairStyle));
+
+  assert.ok(uniqueShirts.size >= 4, 'Debe haber al menos 4 colores de vestimenta definidos por Qwen');
+  assert.ok(uniqueSkins.size >= 4, 'Debe haber diversidad de tonos de piel');
+  assert.ok(uniqueHairStyles.size >= 3, 'Debe haber variedad de estilos de pelo');
+
+  const target = state.agents[0];
+  const note = assignQwenAppearanceSetup(state, target, { reason: 'prueba' });
+  assert.ok(note.includes('Qwen 2.5:3b'));
+
+  const applied = applyQwenActions(state, [
+    {
+      type: 'STYLE_VILLAGERS',
+      targetName: target.name,
+      shirt: '#7c3aed',
+      hairStyle: 'mohawk',
+      hairColor: '#d4a359',
+      skin: '#c68642',
+    },
+  ]);
+  assert.ok(applied[0].includes('estilizado'));
+  assert.equal(target.shirt, '#7c3aed');
+  assert.equal(target.hairStyle, 'mohawk');
+});
+
+test('Ocupantes de casas, comercios, banco, comisaría y cárcel generan iconos de cabeza inferiores, y el Muelle mantiene al pescador visible', () => {
+  const state = createInitialState();
+  const house = createHouseNearCenter(state, 'Casa', 'south', 'medium', 600, 380);
+  const bank = createSpecialBuilding(state, 'bank', 'Banquero', 720, 380);
+  const prison = createSpecialBuilding(state, 'prison', 'Comisario', 840, 380);
+  const dock = createSpecialBuilding(state, 'dock', 'Pescador', 640, 194);
+  assert.ok(bank && prison && dock);
+
+  // 1) Aldeano descansando dentro de su casa
+  const sleeper = state.agents[0];
+  sleeper.houseId = house.id;
+  sleeper.taskType = 'sleep';
+  sleeper.x = house.x;
+  sleeper.y = house.y + 12;
+
+  // 2) Banquero atendiendo dentro del Banco
+  const banker = state.agents[1];
+  banker.job = 'Banquero';
+  banker.assignedBuildingId = bank.id;
+  banker.taskType = 'manage_building';
+  banker.x = bank.x;
+  banker.y = bank.y + 10;
+
+  // 3) Detenido dentro de la Cárcel
+  const prisoner = state.agents[2];
+  prisoner.jailedDays = 2;
+  prisoner.x = prison.x;
+  prisoner.y = prison.y + 8;
+
+  // 4) Pescador trabajando en el Muelle (debe seguir visible en el mapa, NO oculto como icono de cabeza)
+  const fisher = state.agents[3];
+  fisher.job = 'Pescador';
+  fisher.assignedBuildingId = dock.id;
+  fisher.taskType = 'fish_river';
+  fisher.x = dock.x + 14;
+  fisher.y = dock.y - 10;
+
+  const snap = getBuildingOccupancySnapshot(state);
+  const sleeperBadge = snap.badges.find((b) => b.agentId === sleeper.id);
+  const bankerBadge = snap.badges.find((b) => b.agentId === banker.id);
+  const prisonerBadge = snap.badges.find((b) => b.agentId === prisoner.id);
+  const fisherBadge = snap.badges.find((b) => b.agentId === fisher.id);
+
+  assert.ok(sleeperBadge && sleeperBadge.buildingKind === 'house' && sleeperBadge.y > house.y);
+  assert.ok(bankerBadge && bankerBadge.buildingType === 'bank' && bankerBadge.y > bank.y);
+  assert.ok(prisonerBadge && prisonerBadge.buildingType === 'prison' && prisonerBadge.y > prison.y);
+  assert.equal(fisherBadge, undefined, 'El pescador del Muelle debe permanecer visible pescando');
+  assert.equal(snap.insideAgentIds.has(fisher.id), false);
+});
+
 

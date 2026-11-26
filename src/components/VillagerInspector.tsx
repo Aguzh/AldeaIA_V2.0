@@ -185,7 +185,7 @@ export function VillagerInspector({
       aria-label={minimized ? 'Expandir Inspector' : 'Minimizar Inspector'}
       data-testid="toggle-inspector-panel"
       onClick={() => setMinimized((v) => !v)}
-      className="w-9 h-9 rounded-lg bg-[#0b1120] border border-slate-700 hover:border-slate-500 text-slate-200 text-[20px] font-mono flex items-center justify-center transition-colors shrink-0"
+      className="w-7 h-7 rounded-lg bg-[#0b1120] border border-slate-700 hover:border-slate-500 text-slate-200 text-[16px] font-mono flex items-center justify-center transition-colors shrink-0"
     >
       {minimized ? '+' : '−'}
     </button>
@@ -201,13 +201,13 @@ export function VillagerInspector({
       >
         <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-800">
           <div className="min-w-0">
-            <h2 className="text-[22px] leading-tight font-bold text-slate-50" data-testid="inspector-entity-name">
+            <h2 className="text-[16px] leading-tight font-bold text-slate-50" data-testid="inspector-entity-name">
               {inspectedHouse.name}
             </h2>
-            <div className="text-[17px] text-slate-300 mt-0.5">
+            <div className="text-[13px] text-slate-300 mt-0.5">
               Vivienda {sizeLabel} · {inspectedHouse.zone === 'north' ? 'Zona Norte' : 'Zona Sur'}
             </div>
-            <div className="text-[16px] mt-1">
+            <div className="text-[13px] mt-1">
               <span className="font-semibold text-emerald-400">{HOUSE_LEVEL_LABELS[inspectedHouse.level]}</span>
               {' · '}
               <span className="text-slate-300 font-mono tabular-nums">
@@ -220,7 +220,7 @@ export function VillagerInspector({
 
         {!minimized && (
           <>
-            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[17px] flex flex-col gap-2">
+            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[13px] flex flex-col gap-2">
               <div className="flex justify-between gap-2 flex-wrap">
                 <span className="text-slate-400">Obra:</span>
                 <span className="text-slate-100 font-medium">{inspectedHouse.builderName}</span>
@@ -240,7 +240,7 @@ export function VillagerInspector({
                   {getMaintenanceStatusLabel(inspectedHouse.maintenanceStatus ?? 'ok')}
                 </span>
               </div>
-              <div className="text-[15px] text-slate-300 pt-2 border-t border-slate-800/70 leading-snug flex flex-col gap-1">
+              <div className="text-[12px] text-slate-300 pt-2 border-t border-slate-800/70 leading-snug flex flex-col gap-1">
                 <div>
                   Cuota 30d:{' '}
                   <span className="font-mono text-slate-100">
@@ -271,7 +271,7 @@ export function VillagerInspector({
               </div>
               <div className="pt-2 border-t border-slate-800/70">
                 {inspectedHouseResidents.length === 0 ? (
-                  <span className="text-slate-400 italic text-[16px]">Sin habitantes asignados.</span>
+                  <span className="text-slate-400 italic text-[13px]">Sin habitantes asignados.</span>
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
                     {inspectedHouseResidents.map((res) => (
@@ -279,7 +279,7 @@ export function VillagerInspector({
                         key={res.id}
                         type="button"
                         onClick={() => onSelectAgent(res.id)}
-                        className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-emerald-900/60 border border-slate-700 text-[16px] text-slate-100 transition-colors"
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-emerald-900/60 border border-slate-700 text-[13px] text-slate-100 transition-colors"
                       >
                         {res.name} ({res.job})
                       </button>
@@ -289,10 +289,10 @@ export function VillagerInspector({
               </div>
             </div>
 
-            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[17px] flex flex-col gap-2">
+            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[13px] flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-slate-200 font-semibold">Baúl Familiar</span>
-                <span className="text-[15px] text-amber-300">Solo eliminar</span>
+                <span className="text-[12px] text-amber-300">Solo eliminar</span>
               </div>
               <div className="grid grid-cols-1 gap-2 font-mono tabular-nums">
                 {HOUSE_ALLOWED_STORAGE.map((key) => {
@@ -316,7 +316,7 @@ export function VillagerInspector({
                           aria-label={`Quitar ${label} de casa`}
                           data-testid={`house-storage-sub-${key}`}
                           onClick={() => onModifyHouseStorage(inspectedHouse.id, key, -1)}
-                          className="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-rose-900/70 disabled:opacity-40 text-slate-100 text-[16px]"
+                          className="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-rose-900/70 disabled:opacity-40 text-slate-100 text-[13px]"
                         >
                           -1
                         </button>
@@ -326,7 +326,7 @@ export function VillagerInspector({
                           aria-label={`Vaciar ${label} de casa`}
                           data-testid={`house-storage-clear-${key}`}
                           onClick={() => onModifyHouseStorage(inspectedHouse.id, key, -val)}
-                          className="px-2.5 py-1 rounded-md bg-rose-950/70 hover:bg-rose-900/80 disabled:opacity-40 text-rose-200 text-[16px]"
+                          className="px-2.5 py-1 rounded-md bg-rose-950/70 hover:bg-rose-900/80 disabled:opacity-40 text-rose-200 text-[13px]"
                         >
                           Vaciar
                         </button>
@@ -342,7 +342,7 @@ export function VillagerInspector({
               disabled={isObserver}
               onClick={() => onDeleteHouse(inspectedHouse.id)}
               data-testid="inspector-delete-btn"
-              className="w-full py-2.5 px-3 rounded-lg bg-rose-950/70 border border-rose-700/70 hover:bg-rose-900/70 disabled:opacity-40 text-rose-200 text-[18px] font-semibold transition-colors"
+              className="w-full py-2.5 px-3 rounded-lg bg-rose-950/70 border border-rose-700/70 hover:bg-rose-900/70 disabled:opacity-40 text-rose-200 text-[14px] font-semibold transition-colors"
             >
               Demoler / Eliminar vivienda
             </button>
@@ -367,10 +367,10 @@ export function VillagerInspector({
       >
         <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-800">
           <div className="min-w-0">
-            <h2 className="text-[22px] leading-tight font-bold text-slate-50" data-testid="inspector-entity-name">
+            <h2 className="text-[16px] leading-tight font-bold text-slate-50" data-testid="inspector-entity-name">
               {inspectedSpecial.name}
             </h2>
-            <div className="text-[17px] text-slate-300 mt-0.5">
+            <div className="text-[13px] text-slate-300 mt-0.5">
               N{inspectedSpecial.level}/3 · {durability}% estado · {inspectedSpecial.builderName}
             </div>
           </div>
@@ -380,7 +380,7 @@ export function VillagerInspector({
         {!minimized && (
           <>
             <div
-              className={`rounded-lg border px-3 py-2 text-[17px] flex flex-col gap-1 ${
+              className={`rounded-lg border px-3 py-2 text-[13px] flex flex-col gap-1 ${
                 inspectedSpecial.isOperational
                   ? 'bg-emerald-950/40 border-emerald-700/60 text-emerald-200'
                   : 'bg-rose-950/50 border-rose-700/60 text-rose-200'
@@ -395,12 +395,12 @@ export function VillagerInspector({
                     ? 'INOPERATIVO (Deuda)'
                     : 'OBSOLETO (Sin admin.)'}
               </span>
-              <span className="font-mono text-[15px]">
+              <span className="font-mono text-[12px]">
                 {inspectedSpecial.staffIds.length} · {requiredJobs}
               </span>
             </div>
 
-            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[17px] flex flex-col gap-2">
+            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[13px] flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <span className="text-slate-400">Propietario</span>
                 {inspectedSpecial.ownerId !== null && inspectedSpecialOwnerName ? (
@@ -419,7 +419,7 @@ export function VillagerInspector({
                 )}
               </div>
               <div className="text-slate-200 leading-snug">{SPECIAL_ROLE_INFO[inspectedSpecial.type]}</div>
-              <div className="text-slate-300 text-[15px] pt-2 border-t border-slate-800/70 flex flex-col gap-1 leading-snug">
+              <div className="text-slate-300 text-[12px] pt-2 border-t border-slate-800/70 flex flex-col gap-1 leading-snug">
                 <div>
                   Mant.:{' '}
                   <span className="font-mono text-slate-100">
@@ -462,7 +462,7 @@ export function VillagerInspector({
                       key={st.id}
                       type="button"
                       onClick={() => onSelectAgent(st.id)}
-                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-900/60 border border-slate-700 text-[16px] text-slate-100"
+                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-900/60 border border-slate-700 text-[13px] text-slate-100"
                     >
                       {st.name} ({st.job})
                     </button>
@@ -471,10 +471,10 @@ export function VillagerInspector({
               )}
             </div>
 
-            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[17px] flex flex-col gap-2">
+            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[13px] flex flex-col gap-2">
               <div className="flex items-center justify-between text-slate-200 font-semibold">
                 <span>Depósito Específico</span>
-                <span className="text-[15px] text-slate-400">{allowedKeys.length} ítems</span>
+                <span className="text-[12px] text-slate-400">{allowedKeys.length} ítems</span>
               </div>
               <div className="grid grid-cols-1 gap-1.5 font-mono tabular-nums max-h-64 overflow-y-auto pr-1">
                 {allowedKeys.map((k) => (
@@ -488,7 +488,7 @@ export function VillagerInspector({
                         type="button"
                         disabled={isObserver}
                         onClick={() => onModifySpecialStorage(inspectedSpecial.id, k, -1)}
-                        className="w-8 h-8 rounded-md bg-slate-800 hover:bg-rose-900/70 disabled:opacity-40 text-slate-100 flex items-center justify-center text-[18px]"
+                        className="w-7 h-7 rounded-md bg-slate-800 hover:bg-rose-900/70 disabled:opacity-40 text-slate-100 flex items-center justify-center text-[14px]"
                       >
                         -
                       </button>
@@ -499,7 +499,7 @@ export function VillagerInspector({
                         type="button"
                         disabled={isObserver}
                         onClick={() => onModifySpecialStorage(inspectedSpecial.id, k, 1)}
-                        className="w-8 h-8 rounded-md bg-slate-800 hover:bg-emerald-800/70 disabled:opacity-40 text-slate-100 flex items-center justify-center text-[18px]"
+                        className="w-7 h-7 rounded-md bg-slate-800 hover:bg-emerald-800/70 disabled:opacity-40 text-slate-100 flex items-center justify-center text-[14px]"
                       >
                         +
                       </button>
@@ -514,7 +514,7 @@ export function VillagerInspector({
               disabled={isObserver}
               onClick={() => onDeleteSpecial(inspectedSpecial.id)}
               data-testid="inspector-delete-btn"
-              className="w-full py-2.5 px-3 rounded-lg bg-rose-950/70 border border-rose-700/70 hover:bg-rose-900/70 disabled:opacity-40 text-rose-200 text-[18px] font-semibold transition-colors"
+              className="w-full py-2.5 px-3 rounded-lg bg-rose-950/70 border border-rose-700/70 hover:bg-rose-900/70 disabled:opacity-40 text-rose-200 text-[14px] font-semibold transition-colors"
             >
               Demoler / Eliminar edificio
             </button>
@@ -533,10 +533,10 @@ export function VillagerInspector({
       >
         <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-800">
           <div>
-            <h2 className="text-[22px] leading-tight font-bold text-slate-50" data-testid="inspector-entity-name">
+            <h2 className="text-[16px] leading-tight font-bold text-slate-50" data-testid="inspector-entity-name">
               Cultivo de {inspectedFarm.cropName}
             </h2>
-            <div className="text-[17px] text-slate-300 mt-0.5">
+            <div className="text-[13px] text-slate-300 mt-0.5">
               Parcela {sizeLabel} · {Math.round(inspectedFarm.growth)}%
             </div>
           </div>
@@ -547,9 +547,9 @@ export function VillagerInspector({
             <div className="h-3 w-full bg-[#0b1120] rounded-full overflow-hidden">
               <div className="h-full bg-emerald-500" style={{ width: `${Math.round(inspectedFarm.growth)}%` }} />
             </div>
-            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[17px] text-slate-200 flex flex-col gap-1">
+            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[13px] text-slate-200 flex flex-col gap-1">
               <span>Mant.: {getMaintenanceStatusLabel(inspectedFarm.maintenanceStatus ?? 'ok')}</span>
-              <span className="font-mono text-[16px] text-slate-300">
+              <span className="font-mono text-[13px] text-slate-300">
                 {formatResourceCost(getFarmCost(inspectedFarm.size ?? 'medium').maintenance)}
               </span>
             </div>
@@ -558,7 +558,7 @@ export function VillagerInspector({
               disabled={isObserver}
               onClick={() => onDeleteFarm(inspectedFarm.id)}
               data-testid="inspector-delete-btn"
-              className="w-full py-2.5 px-3 rounded-lg bg-rose-950/70 border border-rose-700/70 hover:bg-rose-900/70 disabled:opacity-40 text-rose-200 text-[18px] font-semibold"
+              className="w-full py-2.5 px-3 rounded-lg bg-rose-950/70 border border-rose-700/70 hover:bg-rose-900/70 disabled:opacity-40 text-rose-200 text-[14px] font-semibold"
             >
               Eliminar / Matar cultivo
             </button>
@@ -585,10 +585,10 @@ export function VillagerInspector({
       >
         <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-800">
           <div>
-            <h2 className="text-[22px] leading-tight font-bold text-slate-50" data-testid="inspector-entity-name">
+            <h2 className="text-[16px] leading-tight font-bold text-slate-50" data-testid="inspector-entity-name">
               {inspectedAnimal.name}
             </h2>
-            <div className="text-[17px] text-slate-300 mt-0.5">
+            <div className="text-[13px] text-slate-300 mt-0.5">
               {ANIMAL_LABELS[inspectedAnimal.type]} · {statusText}
             </div>
           </div>
@@ -602,7 +602,7 @@ export function VillagerInspector({
                 style={{ width: `${hpPct}%` }}
               />
             </div>
-            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[18px] grid grid-cols-2 gap-2">
+            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[14px] grid grid-cols-2 gap-2">
               <span>
                 PV: {Math.round(inspectedAnimal.hp)}/{inspectedAnimal.maxHp}
               </span>
@@ -621,7 +621,7 @@ export function VillagerInspector({
               disabled={isObserver}
               onClick={() => onDeleteAnimal(inspectedAnimal.id)}
               data-testid="inspector-delete-btn"
-              className="w-full py-2.5 px-3 rounded-lg bg-rose-950/70 border border-rose-700/70 hover:bg-rose-900/70 disabled:opacity-40 text-rose-200 text-[18px] font-semibold"
+              className="w-full py-2.5 px-3 rounded-lg bg-rose-950/70 border border-rose-700/70 hover:bg-rose-900/70 disabled:opacity-40 text-rose-200 text-[14px] font-semibold"
             >
               Matar / Eliminar animal
             </button>
@@ -639,10 +639,10 @@ export function VillagerInspector({
       >
         <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-800">
           <div>
-            <h2 className="text-[22px] leading-tight font-bold text-slate-50" data-testid="inspector-entity-name">
+            <h2 className="text-[16px] leading-tight font-bold text-slate-50" data-testid="inspector-entity-name">
               Plaza Central de la Aldea
             </h2>
-            <div className="text-[17px] text-slate-300 mt-0.5">
+            <div className="text-[13px] text-slate-300 mt-0.5">
               Obra de {inspectedPlaza.builderName} · {Math.round(inspectedPlaza.durability ?? 100)}%
             </div>
           </div>
@@ -650,7 +650,7 @@ export function VillagerInspector({
         </div>
         {!minimized && (
           <>
-            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[17px] text-slate-200 leading-snug">
+            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[13px] text-slate-200 leading-snug">
               Mant.: {getMaintenanceStatusLabel(inspectedPlaza.maintenanceStatus ?? 'ok')} · Cuota:{' '}
               {formatResourceCost(PLAZA_COSTS.maintenance)} · Rep.: {formatResourceCost(PLAZA_COSTS.repair)}
             </div>
@@ -659,7 +659,7 @@ export function VillagerInspector({
               disabled={isObserver}
               onClick={onDeletePlaza}
               data-testid="inspector-delete-btn"
-              className="w-full py-2.5 px-3 rounded-lg bg-rose-950/70 border border-rose-700/70 hover:bg-rose-900/70 disabled:opacity-40 text-rose-200 text-[18px] font-semibold"
+              className="w-full py-2.5 px-3 rounded-lg bg-rose-950/70 border border-rose-700/70 hover:bg-rose-900/70 disabled:opacity-40 text-rose-200 text-[14px] font-semibold"
             >
               Demoler / Eliminar plaza
             </button>
@@ -678,10 +678,10 @@ export function VillagerInspector({
       >
         <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-800">
           <div>
-            <h2 className="text-[22px] leading-tight font-bold text-slate-50" data-testid="inspector-entity-name">
+            <h2 className="text-[16px] leading-tight font-bold text-slate-50" data-testid="inspector-entity-name">
               Puente Fluvial
             </h2>
-            <div className="text-[17px] text-slate-300 mt-0.5">
+            <div className="text-[13px] text-slate-300 mt-0.5">
               X: {Math.round(inspectedBridge.x)} · {Math.round(inspectedBridge.durability ?? 100)}%
             </div>
           </div>
@@ -690,7 +690,7 @@ export function VillagerInspector({
         {!minimized && (
           <>
             <div
-              className={`rounded-lg border px-3 py-2 text-[17px] font-semibold ${
+              className={`rounded-lg border px-3 py-2 text-[13px] font-semibold ${
                 passable
                   ? 'bg-emerald-950/40 border-emerald-700/60 text-emerald-200'
                   : 'bg-rose-950/50 border-rose-700/60 text-rose-200'
@@ -699,7 +699,7 @@ export function VillagerInspector({
             >
               {passable ? 'Tránsito habilitado (Sur ↔ Norte)' : 'INHABILITADO'}
             </div>
-            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[17px] text-slate-200 leading-snug">
+            <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[13px] text-slate-200 leading-snug">
               Cuota: {formatResourceCost(BRIDGE_COSTS.maintenance)} · Rep.: {formatResourceCost(BRIDGE_COSTS.repair)}
             </div>
             <button
@@ -707,7 +707,7 @@ export function VillagerInspector({
               disabled={isObserver}
               onClick={onDeleteBridge}
               data-testid="inspector-delete-btn"
-              className="w-full py-2.5 px-3 rounded-lg bg-rose-950/70 border border-rose-700/70 hover:bg-rose-900/70 disabled:opacity-40 text-rose-200 text-[18px] font-semibold"
+              className="w-full py-2.5 px-3 rounded-lg bg-rose-950/70 border border-rose-700/70 hover:bg-rose-900/70 disabled:opacity-40 text-rose-200 text-[14px] font-semibold"
             >
               Demoler / Eliminar puente
             </button>
@@ -722,10 +722,10 @@ export function VillagerInspector({
       <section className="bg-[#111827] border border-slate-800 rounded-xl p-3.5 shrink-0" data-testid="inspector-panel">
         <div className="flex items-start justify-between gap-2 mb-2.5">
           <div className="flex flex-col">
-            <h2 className="text-[22px] leading-tight font-bold tracking-wide text-slate-100">
+            <h2 className="text-[16px] leading-tight font-bold tracking-wide text-slate-100">
               Inspector de Aldea
             </h2>
-            <span className="text-[17px] text-slate-300 font-mono tabular-nums mt-0.5">
+            <span className="text-[13px] text-slate-300 font-mono tabular-nums mt-0.5">
               {populationCount - sickCount} sanos · {sickCount} enfermos
             </span>
           </div>
@@ -733,7 +733,7 @@ export function VillagerInspector({
         </div>
         {!minimized && (
           <>
-            <p className="text-[18px] text-slate-300 leading-relaxed mb-3">
+            <p className="text-[14px] text-slate-300 leading-relaxed mb-3">
               Hacé clic en un aldeano, vivienda, edificio, cultivo o animal en el mapa para inspeccionarlo.
             </p>
             {populationCount > 0 && (
@@ -741,7 +741,7 @@ export function VillagerInspector({
                 type="button"
                 onClick={onSelectFirstAgent}
                 data-testid="inspect-first-agent-btn"
-                className="w-full py-2.5 px-3 rounded-lg bg-[#0b1120] border border-slate-700 hover:border-emerald-500 text-[18px] font-semibold text-slate-100 transition-colors"
+                className="w-full py-2.5 px-3 rounded-lg bg-[#0b1120] border border-slate-700 hover:border-emerald-500 text-[14px] font-semibold text-slate-100 transition-colors"
               >
                 Inspeccionar primer aldeano
               </button>
@@ -798,37 +798,37 @@ export function VillagerInspector({
       <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-800">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <h2 className="text-[24px] leading-tight font-bold text-slate-50" data-testid="inspector-agent-name">
+            <h2 className="text-[18px] leading-tight font-bold text-slate-50" data-testid="inspector-agent-name">
               {agent.name}
             </h2>
             {agent.isRepresentative && (
-              <span className="px-2 py-0.5 rounded bg-violet-950/80 border border-violet-600/70 text-[15px] font-semibold text-violet-200">
+              <span className="px-2 py-0.5 rounded bg-violet-950/80 border border-violet-600/70 text-[12px] font-semibold text-violet-200">
                 Rep.
               </span>
             )}
             {agent.isRetired && (
-              <span className="px-2 py-0.5 rounded bg-amber-950/70 border border-amber-700/60 text-[15px] font-semibold text-amber-200">
+              <span className="px-2 py-0.5 rounded bg-amber-950/70 border border-amber-700/60 text-[12px] font-semibold text-amber-200">
                 Jubilado
               </span>
             )}
             {agent.jailedDays > 0 && (
-              <span className="px-2 py-0.5 rounded bg-rose-950/80 border border-rose-600/70 text-[15px] font-semibold text-rose-200">
+              <span className="px-2 py-0.5 rounded bg-rose-950/80 border border-rose-600/70 text-[12px] font-semibold text-rose-200">
                 Preso ({agent.jailedDays}d)
               </span>
             )}
           </div>
-          <div className="text-[17px] text-slate-300 mt-1">
+          <div className="text-[13px] text-slate-300 mt-1">
             {agent.sex === 'M' ? 'H' : 'M'} · {stageLabel} ·{' '}
             <span className="font-mono text-slate-100 font-semibold" data-testid="inspector-agent-age">
               {agent.ageYears} años
             </span>{' '}
             · Gen {agent.generation ?? 1}
           </div>
-          <div className="text-[17px] mt-1">
+          <div className="text-[13px] mt-1">
             <span className="font-semibold text-emerald-400">
               {agent.job} ({currentJobTier})
             </span>
-            <span className="text-slate-300 font-mono tabular-nums text-[15px] ml-2">
+            <span className="text-slate-300 font-mono tabular-nums text-[12px] ml-2">
               · Imp. {agent.importance} ({getRankTitle(agent.importance)})
             </span>
           </div>
@@ -838,15 +838,15 @@ export function VillagerInspector({
 
       {!minimized && (
         <>
-          <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 flex flex-col gap-2.5 text-[17px]">
+          <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 flex flex-col gap-2.5 text-[13px]">
             <div className="flex flex-col gap-0.5">
-              <span className="text-slate-400 text-[15px]">Actividad actual</span>
+              <span className="text-slate-400 text-[12px]">Actividad actual</span>
               <strong className="text-slate-100 font-semibold leading-snug" data-testid="inspector-activity">
                 {agent.activity}
                 {agent.mountedHorseId !== null ? ' (A caballo)' : ''}
               </strong>
             </div>
-            <div className="grid grid-cols-1 gap-2 pt-1 font-mono tabular-nums text-[16px]">
+            <div className="grid grid-cols-1 gap-2 pt-1 font-mono tabular-nums text-[13px]">
               <div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Salud</span>
@@ -880,7 +880,7 @@ export function VillagerInspector({
               </div>
             </div>
             {agent.isSick && agent.illness && (
-              <div className="text-[16px] text-rose-300 font-medium" data-testid="inspector-disease">
+              <div className="text-[13px] text-rose-300 font-medium" data-testid="inspector-disease">
                 {agent.illness.name} · Peligro {agent.illness.dangerPct}%
                 {agent.illness.incurable ? ' · INCURABLE' : ''}
               </div>
@@ -907,7 +907,7 @@ export function VillagerInspector({
                 aria-selected={agentTab === t.id}
                 data-testid={t.testId}
                 onClick={() => setAgentTab(t.id)}
-                className={`py-2 px-2 rounded-md text-[17px] font-semibold transition-colors ${
+                className={`py-2 px-2 rounded-md text-[13px] font-semibold transition-colors ${
                   agentTab === t.id ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:text-white'
                 }`}
               >
@@ -917,7 +917,7 @@ export function VillagerInspector({
           </div>
 
           {agentTab === 'general' && (
-            <div className="flex flex-col gap-2.5 text-[17px]">
+            <div className="flex flex-col gap-2.5 text-[13px]">
               <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 flex flex-col gap-2">
                 <div className="flex justify-between gap-2 flex-wrap">
                   <span className="text-slate-400">Vivienda</span>
@@ -928,7 +928,7 @@ export function VillagerInspector({
                   </span>
                 </div>
                 {agentHouse && (
-                  <div className="flex flex-col gap-1.5 text-[16px] pt-2 border-t border-slate-800/70">
+                  <div className="flex flex-col gap-1.5 text-[13px] pt-2 border-t border-slate-800/70">
                     <span className="font-mono text-slate-200" data-testid="house-storage-summary">
                       Baúl: {agentHouse.storage.food} Alim. · {agentHouse.storage.coins} Mon.
                     </span>
@@ -969,22 +969,22 @@ export function VillagerInspector({
               </div>
 
               <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 flex flex-col gap-2">
-                <div className="text-[17px] text-slate-200 leading-snug">
+                <div className="text-[13px] text-slate-200 leading-snug">
                   Plan: <strong className="text-emerald-300">{agent.qwenPlan}</strong>
                 </div>
-                <p className="text-[18px] text-slate-100 italic leading-relaxed" data-testid="inspector-thought">
+                <p className="text-[14px] text-slate-100 italic leading-relaxed" data-testid="inspector-thought">
                   &quot;{agent.thought}&quot;
                 </p>
                 {agent.lastQwenDecision && (
                   <div
-                    className="pt-2 border-t border-slate-800 text-[16px] text-emerald-300 leading-snug"
+                    className="pt-2 border-t border-slate-800 text-[13px] text-emerald-300 leading-snug"
                     data-testid="inspector-qwen-decision"
                   >
                     IA: {agent.lastQwenDecision}
                   </div>
                 )}
                 {agent.lastDialogue && (
-                  <div className="pt-2 border-t border-slate-800 text-[16px] text-sky-300 leading-snug">
+                  <div className="pt-2 border-t border-slate-800 text-[13px] text-sky-300 leading-snug">
                     Diálogo: {agent.lastDialogue}
                   </div>
                 )}
@@ -993,7 +993,7 @@ export function VillagerInspector({
           )}
 
           {agentTab === 'mind' && (
-            <div className="flex flex-col gap-2.5 text-[17px]">
+            <div className="flex flex-col gap-2.5 text-[13px]">
               <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 flex flex-col gap-2">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <span className="text-slate-200 font-semibold">
@@ -1006,7 +1006,7 @@ export function VillagerInspector({
                       aria-label="Quitar saber general"
                       data-testid="sub-agent-knowledge-btn"
                       onClick={() => onModifyKnowledge(agent.id, -10)}
-                      className="w-8 h-8 rounded-md bg-slate-800 hover:bg-rose-900/70 disabled:opacity-40 text-slate-100 font-mono text-[18px] flex items-center justify-center"
+                      className="w-7 h-7 rounded-md bg-slate-800 hover:bg-rose-900/70 disabled:opacity-40 text-slate-100 font-mono text-[14px] flex items-center justify-center"
                     >
                       -
                     </button>
@@ -1019,7 +1019,7 @@ export function VillagerInspector({
                       aria-label="Agregar saber general"
                       data-testid="add-agent-knowledge-btn"
                       onClick={() => onModifyKnowledge(agent.id, 10)}
-                      className="w-8 h-8 rounded-md bg-slate-800 hover:bg-sky-700/80 disabled:opacity-40 text-slate-100 font-mono text-[18px] flex items-center justify-center"
+                      className="w-7 h-7 rounded-md bg-slate-800 hover:bg-sky-700/80 disabled:opacity-40 text-slate-100 font-mono text-[14px] flex items-center justify-center"
                     >
                       +
                     </button>
@@ -1028,7 +1028,7 @@ export function VillagerInspector({
                 <div className="h-2.5 w-full bg-[#111827] rounded-full overflow-hidden">
                   <div className="h-full bg-sky-400" style={{ width: `${educationPct}%` }} />
                 </div>
-                <div className="flex flex-col gap-1.5 pt-1 text-[16px]">
+                <div className="flex flex-col gap-1.5 pt-1 text-[13px]">
                   <span className="text-slate-300" data-testid="skills-summary">
                     Carpintería {Math.round(agent.carpentryKnowledge)}% · Construcción {Math.round(agent.constructionKnowledge)}%
                   </span>
@@ -1048,7 +1048,7 @@ export function VillagerInspector({
                       return (
                         <div
                           key={sk.id}
-                          className={`px-2.5 py-1.5 rounded-md border text-[16px] flex justify-between gap-2 ${
+                          className={`px-2.5 py-1.5 rounded-md border text-[13px] flex justify-between gap-2 ${
                             active
                               ? 'bg-emerald-950/30 border-emerald-700/50 text-emerald-200'
                               : 'bg-[#111827] border-slate-800 text-slate-400'
@@ -1067,7 +1067,7 @@ export function VillagerInspector({
                 className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 flex flex-col gap-2"
                 data-testid="job-mastery-box"
               >
-                <div className="flex items-center justify-between gap-2 flex-wrap text-[17px]">
+                <div className="flex items-center justify-between gap-2 flex-wrap text-[13px]">
                   <span className="text-slate-200 font-semibold">
                     Maestrías ({maestroCount}/{MAX_MAESTRO_JOBS_PER_AGENT})
                   </span>
@@ -1075,7 +1075,7 @@ export function VillagerInspector({
                     {traits.map((t) => (
                       <span
                         key={t}
-                        className="px-2 py-0.5 rounded bg-violet-950/50 border border-violet-700/50 text-[15px] text-violet-200"
+                        className="px-2 py-0.5 rounded bg-violet-950/50 border border-violet-700/50 text-[12px] text-violet-200"
                       >
                         {PERSONALITY_LABELS[t]}
                       </span>
@@ -1084,14 +1084,14 @@ export function VillagerInspector({
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {trainedJobs.length === 0 ? (
-                    <span className="text-[16px] text-slate-300">
+                    <span className="text-[13px] text-slate-300">
                       {agent.job}: {currentJobMastery}% ({currentJobTier})
                     </span>
                   ) : (
                     trainedJobs.slice(0, 4).map(([jName, pct]) => (
                       <span
                         key={jName}
-                        className={`px-2.5 py-1 rounded border text-[15px] font-mono ${
+                        className={`px-2.5 py-1 rounded border text-[12px] font-mono ${
                           pct > 70
                             ? 'bg-amber-950/50 border-amber-700/70 text-amber-200'
                             : 'bg-slate-900 border-slate-800 text-slate-200'
@@ -1108,15 +1108,15 @@ export function VillagerInspector({
                 className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 flex flex-col gap-2"
                 data-testid="agent-memories-box"
               >
-                <div className="text-[17px] font-semibold text-slate-200">
+                <div className="text-[13px] font-semibold text-slate-200">
                   Memoria Individual ({memories.length}/20)
                 </div>
                 {memories.length === 0 ? (
-                  <div className="text-[16px] text-slate-400 italic">Sin recuerdos significativos aún.</div>
+                  <div className="text-[13px] text-slate-400 italic">Sin recuerdos significativos aún.</div>
                 ) : (
                   <div className="max-h-48 overflow-y-auto flex flex-col gap-2 pr-1">
                     {memories.slice(0, 6).map((m) => (
-                      <div key={m.id} className="text-[16px] flex gap-2 leading-snug">
+                      <div key={m.id} className="text-[13px] flex gap-2 leading-snug">
                         <span
                           className={`font-mono font-semibold shrink-0 ${
                             m.impact === 'positive'
@@ -1138,12 +1138,12 @@ export function VillagerInspector({
           )}
 
           {agentTab === 'inventory' && (
-            <div className="flex flex-col gap-2.5 text-[17px]" data-testid="agent-inventory-5cats">
+            <div className="flex flex-col gap-2.5 text-[13px]" data-testid="agent-inventory-5cats">
               {/* 1. Raciones */}
               <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <div className="text-slate-100 font-semibold">Raciones (Comida)</div>
-                  <div className="text-[15px] text-slate-400 leading-snug">
+                  <div className="text-[12px] text-slate-400 leading-snug">
                     Nat {agent.inv.food} · Pan {agent.breadCount} · Leche {agent.milkCount}
                   </div>
                 </div>
@@ -1153,7 +1153,7 @@ export function VillagerInspector({
                     disabled={isObserver}
                     aria-label="Quitar Raciones"
                     onClick={() => onModifyResource(agent.id, 'food', -1)}
-                    className="w-8 h-8 rounded-md bg-slate-800 hover:bg-rose-900/70 disabled:opacity-40 text-slate-100 font-mono text-[18px]"
+                    className="w-7 h-7 rounded-md bg-slate-800 hover:bg-rose-900/70 disabled:opacity-40 text-slate-100 font-mono text-[14px]"
                   >
                     -
                   </button>
@@ -1165,7 +1165,7 @@ export function VillagerInspector({
                     disabled={isObserver}
                     aria-label="Agregar Raciones"
                     onClick={() => onModifyResource(agent.id, 'food', 1)}
-                    className="w-8 h-8 rounded-md bg-slate-800 hover:bg-emerald-800/70 disabled:opacity-40 text-slate-100 font-mono text-[18px]"
+                    className="w-7 h-7 rounded-md bg-slate-800 hover:bg-emerald-800/70 disabled:opacity-40 text-slate-100 font-mono text-[14px]"
                   >
                     +
                   </button>
@@ -1176,7 +1176,7 @@ export function VillagerInspector({
               <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <div className="text-slate-100 font-semibold">Maderas</div>
-                  <div className="text-[15px] text-slate-400 leading-snug">{woodBreakdownParts.join(' · ')}</div>
+                  <div className="text-[12px] text-slate-400 leading-snug">{woodBreakdownParts.join(' · ')}</div>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button
@@ -1184,7 +1184,7 @@ export function VillagerInspector({
                     disabled={isObserver}
                     aria-label="Quitar Maderas"
                     onClick={() => onModifyResource(agent.id, 'wood', -1)}
-                    className="w-8 h-8 rounded-md bg-slate-800 hover:bg-rose-900/70 disabled:opacity-40 text-slate-100 font-mono text-[18px]"
+                    className="w-7 h-7 rounded-md bg-slate-800 hover:bg-rose-900/70 disabled:opacity-40 text-slate-100 font-mono text-[14px]"
                   >
                     -
                   </button>
@@ -1196,7 +1196,7 @@ export function VillagerInspector({
                     disabled={isObserver}
                     aria-label="Agregar Maderas"
                     onClick={() => onModifyResource(agent.id, 'wood', 1)}
-                    className="w-8 h-8 rounded-md bg-slate-800 hover:bg-emerald-800/70 disabled:opacity-40 text-slate-100 font-mono text-[18px]"
+                    className="w-7 h-7 rounded-md bg-slate-800 hover:bg-emerald-800/70 disabled:opacity-40 text-slate-100 font-mono text-[14px]"
                   >
                     +
                   </button>
@@ -1212,7 +1212,7 @@ export function VillagerInspector({
                     disabled={isObserver}
                     aria-label="Quitar Piedra"
                     onClick={() => onModifyResource(agent.id, 'stone', -1)}
-                    className="w-8 h-8 rounded-md bg-slate-800 hover:bg-rose-900/70 disabled:opacity-40 text-slate-100 font-mono text-[18px]"
+                    className="w-7 h-7 rounded-md bg-slate-800 hover:bg-rose-900/70 disabled:opacity-40 text-slate-100 font-mono text-[14px]"
                   >
                     -
                   </button>
@@ -1224,7 +1224,7 @@ export function VillagerInspector({
                     disabled={isObserver}
                     aria-label="Agregar Piedra"
                     onClick={() => onModifyResource(agent.id, 'stone', 1)}
-                    className="w-8 h-8 rounded-md bg-slate-800 hover:bg-emerald-800/70 disabled:opacity-40 text-slate-100 font-mono text-[18px]"
+                    className="w-7 h-7 rounded-md bg-slate-800 hover:bg-emerald-800/70 disabled:opacity-40 text-slate-100 font-mono text-[14px]"
                   >
                     +
                   </button>
@@ -1236,11 +1236,11 @@ export function VillagerInspector({
                 <div className="flex items-center justify-between gap-2">
                   <div>
                     <div className="text-slate-100 font-semibold">Minerales</div>
-                    <div className="text-[15px] text-slate-400 leading-snug">
+                    <div className="text-[12px] text-slate-400 leading-snug">
                       {mineralBreakdownParts.length > 0 ? mineralBreakdownParts.join(' · ') : 'Requiere saber minero'}
                     </div>
                   </div>
-                  <span className="font-mono font-bold text-slate-50 text-[18px]" data-testid="inv-minerals">
+                  <span className="font-mono font-bold text-slate-50 text-[14px]" data-testid="inv-minerals">
                     {totalMinerals}
                   </span>
                 </div>
@@ -1249,7 +1249,7 @@ export function VillagerInspector({
                     aria-label="Tipo de mineral"
                     value={selectedMineralKey}
                     onChange={(e) => setSelectedMineralKey(e.target.value as 'copper' | 'iron' | 'silver' | 'gold')}
-                    className="flex-1 bg-[#111827] border border-slate-700 rounded-md px-2.5 py-1.5 text-[16px] text-slate-100"
+                    className="flex-1 bg-[#111827] border border-slate-700 rounded-md px-2.5 py-1.5 text-[13px] text-slate-100"
                   >
                     <option value="copper">Cobre</option>
                     <option value="iron">Hierro</option>
@@ -1261,7 +1261,7 @@ export function VillagerInspector({
                     disabled={isObserver}
                     aria-label="Quitar Mineral"
                     onClick={() => onModifyResource(agent.id, selectedMineralKey, -1)}
-                    className="w-8 h-8 rounded-md bg-slate-800 hover:bg-rose-900/70 disabled:opacity-40 text-slate-100 font-mono text-[18px]"
+                    className="w-7 h-7 rounded-md bg-slate-800 hover:bg-rose-900/70 disabled:opacity-40 text-slate-100 font-mono text-[14px]"
                   >
                     -
                   </button>
@@ -1270,7 +1270,7 @@ export function VillagerInspector({
                     disabled={isObserver}
                     aria-label="Agregar Mineral"
                     onClick={() => onModifyResource(agent.id, selectedMineralKey, 1)}
-                    className="w-8 h-8 rounded-md bg-slate-800 hover:bg-emerald-800/70 disabled:opacity-40 text-slate-100 font-mono text-[18px]"
+                    className="w-7 h-7 rounded-md bg-slate-800 hover:bg-emerald-800/70 disabled:opacity-40 text-slate-100 font-mono text-[14px]"
                   >
                     +
                   </button>
@@ -1281,7 +1281,7 @@ export function VillagerInspector({
               <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <div className="text-amber-300 font-semibold">Monedas</div>
-                  <div className="text-[15px] text-slate-400">
+                  <div className="text-[12px] text-slate-400">
                     {agent.loanDebt > 0 ? `Deuda: ${agent.loanDebt}m` : 'Respaldadas Oro/Plata'}
                   </div>
                 </div>
@@ -1291,7 +1291,7 @@ export function VillagerInspector({
                     disabled={isObserver}
                     aria-label="Quitar Monedas"
                     onClick={() => onModifyResource(agent.id, 'coins', -1)}
-                    className="w-8 h-8 rounded-md bg-slate-800 hover:bg-rose-900/70 disabled:opacity-40 text-slate-100 font-mono text-[18px]"
+                    className="w-7 h-7 rounded-md bg-slate-800 hover:bg-rose-900/70 disabled:opacity-40 text-slate-100 font-mono text-[14px]"
                   >
                     -
                   </button>
@@ -1303,14 +1303,14 @@ export function VillagerInspector({
                     disabled={isObserver}
                     aria-label="Agregar Monedas"
                     onClick={() => onModifyResource(agent.id, 'coins', 1)}
-                    className="w-8 h-8 rounded-md bg-slate-800 hover:bg-emerald-800/70 disabled:opacity-40 text-slate-100 font-mono text-[18px]"
+                    className="w-7 h-7 rounded-md bg-slate-800 hover:bg-emerald-800/70 disabled:opacity-40 text-slate-100 font-mono text-[14px]"
                   >
                     +
                   </button>
                 </div>
               </div>
 
-              <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[16px] text-slate-200 font-mono flex flex-col gap-2">
+              <div className="bg-[#0b1120] border border-slate-800 rounded-lg p-3 text-[13px] text-slate-200 font-mono flex flex-col gap-2">
                 <span>
                   Herramientas: {agent.toolsCount} · Medicinas: {agent.medicineCount}
                 </span>
@@ -1318,7 +1318,7 @@ export function VillagerInspector({
                   type="button"
                   disabled={educationPct < 36 || isObserver}
                   onClick={() => onCraftTools(agent.id)}
-                  className="w-full px-3 py-2 rounded-lg bg-amber-900/50 hover:bg-amber-800/70 disabled:opacity-40 border border-amber-700/60 text-amber-200 text-[16px] font-sans font-semibold"
+                  className="w-full px-3 py-2 rounded-lg bg-amber-900/50 hover:bg-amber-800/70 disabled:opacity-40 border border-amber-700/60 text-amber-200 text-[13px] font-sans font-semibold"
                 >
                   Forjar herramienta (36%+ Saber · 1C + 1H)
                 </button>
@@ -1326,7 +1326,7 @@ export function VillagerInspector({
 
               {agent.activeConstruction && (
                 <div
-                  className="bg-amber-950/30 border border-amber-700/50 rounded-lg p-3 text-[17px] flex items-center justify-between text-amber-200"
+                  className="bg-amber-950/30 border border-amber-700/50 rounded-lg p-3 text-[13px] flex items-center justify-between text-amber-200"
                   data-testid="agent-active-construction"
                 >
                   <span>Obra: {agent.activeConstruction.kind}</span>
@@ -1347,7 +1347,7 @@ export function VillagerInspector({
           )}
 
           {agentTab === 'options' && (
-            <div className="flex flex-col gap-2.5 text-[17px]">
+            <div className="flex flex-col gap-2.5 text-[13px]">
               <div className="grid grid-cols-1 gap-2">
                 <button
                   type="button"
@@ -1413,7 +1413,7 @@ export function VillagerInspector({
               </div>
 
               {isAdvanced && onDivineChangeAge && onDivineChangeJob && (
-                <div className="bg-[#0b1120] border border-violet-800/50 rounded-lg p-3 flex flex-col gap-2.5 text-[17px]">
+                <div className="bg-[#0b1120] border border-violet-800/50 rounded-lg p-3 flex flex-col gap-2.5 text-[13px]">
                   <div className="text-violet-300 font-semibold">Edición Divina Avanzada</div>
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-slate-300">Edad ({agent.ageYears}a)</span>
@@ -1421,14 +1421,14 @@ export function VillagerInspector({
                       <button
                         type="button"
                         onClick={() => onDivineChangeAge(agent.id, -5)}
-                        className="px-3 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-100 font-mono text-[16px]"
+                        className="px-3 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-100 font-mono text-[13px]"
                       >
                         -5a
                       </button>
                       <button
                         type="button"
                         onClick={() => onDivineChangeAge(agent.id, 5)}
-                        className="px-3 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-100 font-mono text-[16px]"
+                        className="px-3 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-100 font-mono text-[13px]"
                       >
                         +5a
                       </button>
@@ -1439,7 +1439,7 @@ export function VillagerInspector({
                     <select
                       value={agent.job}
                       onChange={(e) => onDivineChangeJob(agent.id, e.target.value as JobType)}
-                      className="bg-[#111827] border border-slate-700 rounded-md px-2.5 py-2 text-[17px] text-slate-100"
+                      className="bg-[#111827] border border-slate-700 rounded-md px-2.5 py-2 text-[13px] text-slate-100"
                     >
                       {ALL_JOBS.map((j) => (
                         <option key={j} value={j}>
