@@ -1,35 +1,14 @@
-```{=html}
-<p align="center">
-```
-`<img src="assets/aldea-ia-logo.png" alt="Aldea IA — By Aguzh" width="850">`{=html}
-```{=html}
-</p>
-```
-```{=html}
-<h1 align="center">
-```
-Aldea IA
-```{=html}
-</h1>
-```
-```{=html}
-<p align="center">
-```
-`<strong>`{=html}Diez fundadores. Un mundo. Infinitas
-posibilidades.`</strong>`{=html}`<br>`{=html} Un simulador autónomo de
-civilización en pixel art 16-bit.
-```{=html}
-</p>
-```
-```{=html}
-<p align="center">
-```
-`<em>`{=html}Creado por Aguzh`</em>`{=html}
-```{=html}
-</p>
-```
+![Aldea IA — By Aguzh](assets/aldea-ia-logo.png)
 
-------------------------------------------------------------------------
+# Aldea IA
+
+**Diez fundadores. Un mundo. Infinitas posibilidades.**
+
+Un simulador autónomo de civilización en pixel art 16-bit.
+
+*Creado por Aguzh*
+
+---
 
 ## ¿Qué es Aldea IA?
 
