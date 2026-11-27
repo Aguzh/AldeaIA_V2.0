@@ -393,10 +393,4 @@ destino.
 
 ------------------------------------------------------------------------
 
-```{=html}
-<p align="center">
-```
-`<strong>`{=html}Aldea IA --- By Aguzh`</strong>`{=html}
-```{=html}
-</p>
-```
+Aldea IA --- By Aguzh
