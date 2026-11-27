@@ -1,4 +1,4 @@
-![Aldea IA — By Aguzh](assets/aldea-ia-logo.png)
+![Aldea IA — By Aguzh](public/assets/aldea-ia-logo.png)
 
 # Aldea IA
 
