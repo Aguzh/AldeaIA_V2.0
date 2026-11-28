@@ -9,7 +9,7 @@ const ROOT_DIR = process.cwd();
 const PORT = Number(process.env.PORT) || 3000;
 const isProd = process.env.NODE_ENV === 'production';
 
-function collectSourceFiles(dirPath: string, baseRel = ''): Array<{ relPath: string; absPath: string }> {
+export function collectSourceFiles(dirPath: string, baseRel = ''): Array<{ relPath: string; absPath: string }> {
   const results: Array<{ relPath: string; absPath: string }> = [];
   if (!fs.existsSync(dirPath)) return results;
 
@@ -28,6 +28,31 @@ function collectSourceFiles(dirPath: string, baseRel = ''): Array<{ relPath: str
   return results;
 }
 
+export function collectPublicAssets(rootDir = ROOT_DIR): Array<{ relPath: string; absPath: string }> {
+  const publicDir = path.join(rootDir, 'public');
+  const results: Array<{ relPath: string; absPath: string }> = [];
+  if (!fs.existsSync(publicDir)) return results;
+
+  const walk = (dirPath: string, baseRel: string) => {
+    for (const entry of fs.readdirSync(dirPath, { withFileTypes: true })) {
+      if (entry.name.startsWith('.')) continue;
+      const absPath = path.join(dirPath, entry.name);
+      const relPath = `${baseRel}/${entry.name}`;
+      if (entry.isDirectory()) {
+        if (relPath === 'public/assets/aistudio' || relPath === 'public/assets/screenshots') {
+          continue;
+        }
+        walk(absPath, relPath);
+      } else if (entry.isFile()) {
+        results.push({ relPath, absPath });
+      }
+    }
+  };
+
+  walk(publicDir, 'public');
+  return results;
+}
+
 function buildLocalReadme(): string {
   return `# Aldea IA - Edición Local para PC
 
@@ -35,7 +60,7 @@ Simulador de vida autónomo en pixel art con evolución de eras, construcción d
 
 ## Importante antes de empezar (Windows)
 1. **Extraé (descomprimí) todo el archivo \`.zip\`** en una carpeta real (por ejemplo \`C:\\AldeaIA\`). No ejecutes \`INICIAR_WINDOWS.bat\` directamente desde adentro del ZIP sin extraerlo.
-2. Si querés jugar al instante **sin instalar Node.js ni npm**, abrí directamente el archivo \`ALDEA_IA_PORTABLE.html\` incluido en esta carpeta con Chrome o Edge.
+2. Si querés jugar al instante **sin instalar Node.js ni npm**, abrí directamente el archivo \`ALDEA_IA_PORTABLE.html\` incluido en esta carpeta con Chrome o Edge (ya trae todos los sprites integrados).
 
 ## Opción 1: Ejecución rápida con Node.js (con guardado en disco)
 
@@ -71,7 +96,7 @@ Luego abrí en tu navegador: **http://localhost:3000**
 `;
 }
 
-function buildStandalonePackageJson(): string {
+export function buildStandalonePackageJson(): string {
   return JSON.stringify(
     {
       name: 'aldea-ia-local',
@@ -80,20 +105,23 @@ function buildStandalonePackageJson(): string {
       type: 'module',
       scripts: {
         dev: 'node ./node_modules/tsx/dist/cli.mjs server.ts',
+        start: 'node ./node_modules/tsx/dist/cli.mjs server.ts',
         'dev:vite': 'node ./node_modules/vite/bin/vite.js --port=3000 --host=127.0.0.1',
-        build: 'node ./node_modules/vite/bin/vite.js build',
+        build: 'node ./node_modules/vite/bin/vite.js build && node scripts/build-portable.mjs',
         preview: 'node ./node_modules/vite/bin/vite.js preview --port=3000',
         lint: 'node ./node_modules/typescript/bin/tsc --noEmit',
       },
       dependencies: {
-        '@google/genai': '^2.32.0',
+        '@google/genai': '^2.4.0',
         '@tailwindcss/vite': '^4.3.3',
         '@vitejs/plugin-react': '^6.1.1',
+        autoprefixer: '^10.4.21',
         dotenv: '^17.2.3',
         esbuild: '^0.28.0',
         express: '^4.21.2',
         jszip: '^3.10.2',
         'lucide-react': '^0.546.0',
+        motion: '^12.23.24',
         react: '^19.0.1',
         'react-dom': '^19.0.1',
         tailwindcss: '^4.3.3',
@@ -113,7 +141,7 @@ function buildStandalonePackageJson(): string {
   );
 }
 
-function buildWindowsLauncher(): string {
+export function buildWindowsLauncher(): string {
   const lines = [
     '@echo off',
     'setlocal',
@@ -124,6 +152,10 @@ function buildWindowsLauncher(): string {
     '  echo Asegurate de EXTRAER todo el archivo .zip antes de ejecutar INICIAR_WINDOWS.bat.',
     '  pause',
     '  exit /b 1',
+    ')',
+    'if not exist "public\\assets\\sprites\\terrain-crops.png" (',
+    '  echo [AVISO] Faltan archivos de sprites en public\\assets\\sprites.',
+    '  echo Verifica haber extraido todas las carpetas del .zip manteniendo la estructura.',
     ')',
     'where node >nul 2>nul',
     'if %errorlevel% neq 0 (',
@@ -138,6 +170,9 @@ function buildWindowsLauncher(): string {
     'set "NODE_ENV="',
     'if not exist "node_modules\\vite\\bin\\vite.js" goto :install_deps',
     'if not exist "node_modules\\tsx\\dist\\cli.mjs" goto :install_deps',
+    'if not exist "node_modules\\express\\package.json" goto :install_deps',
+    'if not exist "node_modules\\jszip\\package.json" goto :install_deps',
+    'if not exist "node_modules\\@tailwindcss\\vite\\package.json" goto :install_deps',
     'goto :start_app',
     ':install_deps',
     'echo Instalando dependencias locales (esto puede demorar 1 minuto la primera vez)...',
@@ -148,10 +183,11 @@ function buildWindowsLauncher(): string {
     ')',
     'if not exist "node_modules\\vite\\bin\\vite.js" goto :install_failed',
     'if not exist "node_modules\\tsx\\dist\\cli.mjs" goto :install_failed',
+    'if not exist "node_modules\\express\\package.json" goto :install_failed',
     'goto :start_app',
     ':install_failed',
     'echo.',
-    'echo [ERROR] No se pudieron instalar Vite/TSX en node_modules.',
+    'echo [ERROR] No se pudieron instalar las dependencias en node_modules.',
     'echo Verifica tu conexion a internet o extrae el ZIP en una ruta simple como C:\\AldeaIA.',
     'if exist "ALDEA_IA_PORTABLE.html" (',
     '  echo Abriendo la version portable ALDEA_IA_PORTABLE.html en tu navegador...',
@@ -161,7 +197,7 @@ function buildWindowsLauncher(): string {
     'exit /b 1',
     ':start_app',
     'echo Iniciando Aldea IA en http://localhost:3000 ...',
-    'start "" cmd /c "timeout /t 2 /nobreak >nul & start "" http://localhost:3000"',
+    'start "" cmd /c "timeout /t 3 /nobreak >nul && start http://localhost:3000"',
     'call npm run dev',
     'pause',
     '',
@@ -178,7 +214,7 @@ if [ ! -f "package.json" ]; then
   exit 1
 fi
 unset NODE_ENV
-if [ ! -f "node_modules/vite/bin/vite.js" ] || [ ! -f "node_modules/tsx/dist/cli.mjs" ]; then
+if [ ! -f "node_modules/vite/bin/vite.js" ] || [ ! -f "node_modules/tsx/dist/cli.mjs" ] || [ ! -f "node_modules/express/package.json" ]; then
   echo "Instalando dependencias locales por primera vez..."
   npm install --include=dev --no-audit --no-fund || npm install --include=dev --legacy-peer-deps --no-audit --no-fund
 fi
@@ -186,6 +222,61 @@ echo "Iniciando Aldea IA en http://localhost:3000 ..."
 (sleep 2 && (xdg-open http://localhost:3000 2>/dev/null || open http://localhost:3000 2>/dev/null || true)) &
 npm run dev
 `;
+}
+
+function newestMtimeMs(pathsToCheck: string[]): number {
+  let latest = 0;
+  for (const p of pathsToCheck) {
+    if (!fs.existsSync(p)) continue;
+    const stat = fs.statSync(p);
+    if (stat.isFile()) {
+      latest = Math.max(latest, stat.mtimeMs);
+    } else if (stat.isDirectory()) {
+      for (const entry of fs.readdirSync(p, { withFileTypes: true })) {
+        const sub = path.join(p, entry.name);
+        if (entry.isFile()) {
+          latest = Math.max(latest, fs.statSync(sub).mtimeMs);
+        } else if (entry.isDirectory() && entry.name !== 'node_modules' && entry.name !== 'dist') {
+          latest = Math.max(latest, newestMtimeMs([sub]));
+        }
+      }
+    }
+  }
+  return latest;
+}
+
+async function getOrBuildPortableHtml(rootDir = ROOT_DIR): Promise<string> {
+  const prebuiltPath = path.join(rootDir, 'dist', 'aldea-ia-local.html');
+  if (fs.existsSync(prebuiltPath)) {
+    const content = fs.readFileSync(prebuiltPath, 'utf8');
+    const hasSprites = content.includes('__ALDEA_INLINE_SPRITES__') && content.includes('data:image/');
+    if (isProd && hasSprites) {
+      return content;
+    }
+    if (hasSprites) {
+      const prebuiltMtime = fs.statSync(prebuiltPath).mtimeMs;
+      const latestInputMtime = newestMtimeMs([
+        path.join(rootDir, 'src'),
+        path.join(rootDir, 'public', 'assets', 'sprites'),
+        path.join(rootDir, 'scripts', 'build-portable.mjs'),
+        path.join(rootDir, 'index.html'),
+      ]);
+      if (prebuiltMtime >= latestInputMtime) {
+        return content;
+      }
+    }
+  }
+
+  const distAssetsDir = path.join(rootDir, 'dist', 'assets');
+  const hasCss =
+    fs.existsSync(distAssetsDir) &&
+    fs.readdirSync(distAssetsDir).some((f) => f.endsWith('.css'));
+  if (!hasCss) {
+    const { build } = await import('vite');
+    await build({ logLevel: 'silent' });
+  }
+  const { generatePortableHtml } = await import('./scripts/build-portable.mjs');
+  return await generatePortableHtml(rootDir);
 }
 
 const SAVE_DATA_DIR = path.join(ROOT_DIR, 'data');
@@ -494,23 +585,7 @@ async function startServer() {
 
   app.get('/api/download-portable', async (_req, res) => {
     try {
-      const prebuiltPath = path.join(ROOT_DIR, 'dist', 'aldea-ia-local.html');
-      if (fs.existsSync(prebuiltPath)) {
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.setHeader('Content-Disposition', 'attachment; filename="aldea-ia-local.html"');
-        res.sendFile(prebuiltPath);
-        return;
-      }
-
-      // En desarrollo, compilar CSS si falta dist/assets y generar portable al vuelo
-      const distAssetsDir = path.join(ROOT_DIR, 'dist', 'assets');
-      if (!fs.existsSync(distAssetsDir)) {
-        const { build } = await import('vite');
-        await build({ logLevel: 'silent' });
-      }
-      const { generatePortableHtml } = await import('./scripts/build-portable.mjs');
-      const html = await generatePortableHtml(ROOT_DIR);
-
+      const html = await getOrBuildPortableHtml(ROOT_DIR);
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.setHeader('Content-Disposition', 'attachment; filename="aldea-ia-local.html"');
       res.send(html);
@@ -531,7 +606,12 @@ async function startServer() {
         rootFolder.file(file.relPath, fs.readFileSync(file.absPath));
       }
 
-      for (const rootFile of ['index.html', 'tsconfig.json', 'vite.config.ts', 'server.ts']) {
+      const publicAssets = collectPublicAssets(ROOT_DIR);
+      for (const asset of publicAssets) {
+        rootFolder.file(asset.relPath, fs.readFileSync(asset.absPath));
+      }
+
+      for (const rootFile of ['index.html', 'tsconfig.json', 'vite.config.ts', 'server.ts', 'metadata.json', '.env.example']) {
         const abs = path.join(ROOT_DIR, rootFile);
         if (fs.existsSync(abs)) {
           rootFolder.file(rootFile, fs.readFileSync(abs));
@@ -543,23 +623,12 @@ async function startServer() {
         rootFolder.file('scripts/build-portable.mjs', fs.readFileSync(portableScript));
       }
 
-      // Incluir también copia HTML portable lista para abrir sin Node/npm
-      const prebuiltPortable = path.join(ROOT_DIR, 'dist', 'aldea-ia-local.html');
-      if (fs.existsSync(prebuiltPortable)) {
-        rootFolder.file('ALDEA_IA_PORTABLE.html', fs.readFileSync(prebuiltPortable));
-      } else {
-        try {
-          const distAssetsDir = path.join(ROOT_DIR, 'dist', 'assets');
-          if (!fs.existsSync(distAssetsDir)) {
-            const { build } = await import('vite');
-            await build({ logLevel: 'silent' });
-          }
-          const { generatePortableHtml } = await import('./scripts/build-portable.mjs');
-          const portableHtml = await generatePortableHtml(ROOT_DIR);
-          rootFolder.file('ALDEA_IA_PORTABLE.html', portableHtml);
-        } catch (portableErr) {
-          console.warn('Aviso: no se pudo adjuntar ALDEA_IA_PORTABLE.html al ZIP:', portableErr);
-        }
+      // Incluir también copia HTML portable lista para abrir sin Node/npm (con sprites integrados)
+      try {
+        const portableHtml = await getOrBuildPortableHtml(ROOT_DIR);
+        rootFolder.file('ALDEA_IA_PORTABLE.html', portableHtml);
+      } catch (portableErr) {
+        console.warn('Aviso: no se pudo adjuntar ALDEA_IA_PORTABLE.html al ZIP:', portableErr);
       }
 
       rootFolder.file('package.json', buildStandalonePackageJson());
@@ -587,6 +656,7 @@ async function startServer() {
   } else {
     const distDir = path.join(ROOT_DIR, 'dist');
     app.use(express.static(distDir));
+    app.use('/assets', express.static(path.join(ROOT_DIR, 'public', 'assets')));
     app.get('*', (_req, res) => {
       res.sendFile(path.join(distDir, 'index.html'));
     });
@@ -597,4 +667,6 @@ async function startServer() {
   });
 }
 
-startServer();
+if (process.env.ALDEA_NO_LISTEN !== '1') {
+  startServer();
+}

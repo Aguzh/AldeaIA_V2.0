@@ -1,0 +1,1369 @@
+# PROMPT MAESTRO — ALDEA IA
+## Expansión de sistemas, evolución de civilización y optimización del motor
+
+**Proyecto:** Aldea IA  
+**Creador:** Aguzh  
+**Objetivo:** Ampliar las mecánicas de simulación, evolución social, cultura, tecnología, historia y ecosistema sin alterar ni romper los sistemas existentes.
+
+---
+
+# 1. INSTRUCCIÓN PRINCIPAL
+
+Quiero que trabajes sobre el proyecto existente de **Aldea IA**.
+
+No quiero que desarrolles un juego nuevo, que reemplaces el motor actual ni que reconstruyas la arquitectura desde cero.
+
+Quiero que estudies el código existente, comprendas las relaciones entre los sistemas y amplíes el juego incorporando las funcionalidades detalladas en este documento.
+
+El objetivo es transformar Aldea IA en un simulador de civilización autónoma en el que podamos observar cómo una pequeña población evoluciona durante generaciones, desarrolla una cultura, descubre tecnologías, supera crisis, construye una sociedad y eventualmente se convierte en una civilización avanzada.
+
+Todo debe funcionar de manera coherente y producir consecuencias reales dentro de la simulación.
+
+**La prioridad absoluta es preservar la estabilidad del proyecto actual.**
+
+Antes de modificar cualquier archivo:
+
+1. Inspeccioná la arquitectura completa del proyecto.
+2. Identificá el motor de simulación y sus ciclos de actualización.
+3. Identificá cómo se almacenan los aldeanos, sus familias, edificios, recursos y estadísticas.
+4. Identificá cómo funcionan los proveedores de inteligencia artificial.
+5. Identificá el sistema de guardado y recuperación de partidas.
+6. Identificá las herramientas de Intervención Divina.
+7. Identificá los sistemas de calendario, estaciones, clima y progresión tecnológica.
+8. Identificá las dependencias entre módulos para evitar modificaciones que generen efectos secundarios.
+
+No supongas que una funcionalidad no existe simplemente porque no aparezca en este documento. Si ya está implementada, reutilizala y extendela.
+
+No dupliques sistemas que ya cumplen una función equivalente.
+
+---
+
+# 2. LOS TRES PILARES QUE NO SE PUEDEN MODIFICAR
+
+## 2.1. La civilización debe progresar autónomamente
+
+El objetivo principal de Aldea IA es observar cómo evoluciona una sociedad sin necesidad de que el jugador controle constantemente a sus habitantes.
+
+Los aldeanos deben poder:
+
+- Conseguir alimentos.
+- Construir viviendas.
+- Formar familias.
+- Tener hijos.
+- Aprender profesiones.
+- Mejorar sus habilidades.
+- Desarrollar conocimientos.
+- Organizar la economía.
+- Construir infraestructura.
+- Crear instituciones.
+- Adaptarse a problemas ambientales.
+- Mantener sus construcciones.
+- Desarrollar nuevas tecnologías.
+- Organizar su gobierno.
+- Superar crisis.
+- Transmitir conocimientos entre generaciones.
+
+La autonomía no debe depender exclusivamente de una IA.
+
+El motor normal del juego debe poder ejecutar todos los procesos fundamentales mediante reglas determinísticas.
+
+## 2.2. La inteligencia artificial debe seguir siendo opcional
+
+Mantener la posibilidad de utilizar:
+
+- Qwen 2.5:3B mediante Ollama.
+- Otros modelos locales.
+- Modelos conectados mediante servicios externos.
+- Google Gemini.
+- OpenAI.
+- Anthropic Claude.
+- Modo sin inteligencia artificial.
+
+No convertir Qwen 2.5:3B en un requisito obligatorio.
+
+No modificar innecesariamente la integración actual con los proveedores.
+
+La IA debe poder participar en decisiones estratégicas, culturales, administrativas y de planificación, pero el motor debe validar y ejecutar las acciones reales.
+
+Si una IA deja de responder, se desconecta o devuelve una respuesta inválida, la simulación debe continuar mediante el sistema alternativo del motor.
+
+## 2.3. El jugador sigue siendo la Intervención Divina
+
+Este concepto no se debe perder bajo ninguna circunstancia.
+
+El jugador puede:
+
+- Observar sin intervenir.
+- Ayudar a la población.
+- Acelerar artificialmente el desarrollo.
+- Crear recursos.
+- Modificar condiciones ambientales.
+- Alterar la economía.
+- Curar o enfermar habitantes.
+- Provocar desastres.
+- Modificar el desarrollo tecnológico.
+- Ayudar a una familia.
+- Perjudicar a una civilización.
+- Alterar acontecimientos históricos.
+
+Las nuevas funcionalidades deben ser compatibles con las herramientas divinas existentes.
+
+No limitar las capacidades del jugador ni convertir el juego en una simulación completamente automática sin posibilidad de intervención.
+
+---
+
+# 3. SISTEMA DE GENERACIONES, FAMILIAS Y LEGADO
+
+Ampliar el sistema familiar existente para que cada generación tenga una influencia real en la evolución de la civilización.
+
+Actualmente existen nacimientos, parejas, edades y árboles genealógicos. Se debe profundizar ese sistema.
+
+## 3.1. Legado familiar
+
+Cada familia debe poder desarrollar una identidad histórica.
+
+Incorporar:
+
+- Identificación de familias fundadoras.
+- Registro de generaciones.
+- Árbol genealógico completo.
+- Reconocimiento de antepasados importantes.
+- Registro de profesiones predominantes por familia.
+- Herencia parcial de conocimientos.
+- Registro de descendientes.
+- Registro de acontecimientos familiares importantes.
+
+Las habilidades heredadas no deben reemplazar el aprendizaje individual.
+
+Un descendiente puede tener una predisposición o conocimiento inicial relacionado con sus padres, pero deberá desarrollar sus propias habilidades.
+
+## 3.2. Familias influyentes
+
+Permitir que determinadas familias adquieran importancia dentro de la sociedad.
+
+Por ejemplo:
+
+- Familias de comerciantes.
+- Familias de agricultores.
+- Familias de constructores.
+- Familias de maestros.
+- Familias vinculadas al gobierno.
+
+Su influencia debe surgir de acontecimientos reales, riqueza, conocimientos, responsabilidades y contribuciones.
+
+No otorgar poder automáticamente por pertenecer a una familia.
+
+## 3.3. Figuras históricas
+
+Cuando un aldeano realice una contribución extraordinaria, el sistema podrá reconocerlo como figura histórica.
+
+Ejemplos:
+
+- Primer aldeano que alcanza una maestría.
+- Descubridor de una tecnología.
+- Fundador de una institución.
+- Constructor de una infraestructura importante.
+- Persona que salva a la población durante una crisis.
+
+Estas personas deben quedar registradas en la historia de la civilización.
+
+Cuando mueran, su legado debe permanecer.
+
+## 3.4. Interfaz
+
+Ampliar el panel Familias existente.
+
+Agregar:
+
+- Generación actual.
+- Cantidad de integrantes vivos.
+- Cantidad de descendientes históricos.
+- Fundadores originales.
+- Profesiones predominantes.
+- Figuras históricas relacionadas.
+- Acontecimientos familiares.
+
+La información debe poder consultarse sin saturar el mapa principal.
+
+---
+
+# 4. CULTURA, TRADICIONES Y CELEBRACIONES
+
+Incorporar un sistema cultural que evolucione naturalmente con la sociedad.
+
+Una civilización no debe desarrollarse únicamente mediante edificios, monedas y tecnologías.
+
+También debe construir una identidad.
+
+## 4.1. Tradiciones
+
+Permitir que aparezcan tradiciones a partir de acontecimientos reales.
+
+Ejemplos:
+
+- Celebración de una gran cosecha.
+- Aniversario de la fundación de la aldea.
+- Homenaje a un personaje histórico.
+- Celebración por superar una epidemia.
+- Conmemoración de una construcción importante.
+
+Las tradiciones deben tener fecha, origen y descripción.
+
+## 4.2. Festividades
+
+Incorporar celebraciones periódicas que puedan afectar positivamente a la sociedad.
+
+Posibles consecuencias:
+
+- Mayor felicidad.
+- Mejora de relaciones sociales.
+- Aumento temporal de actividad comercial.
+- Consumo adicional de alimentos.
+- Mayor cohesión social.
+
+Las celebraciones deben requerir recursos y tener un costo económico.
+
+No generar beneficios gratuitos.
+
+## 4.3. Creencias y supersticiones
+
+Permitir que aparezcan creencias culturales de manera opcional y no obligatoria.
+
+Pueden estar relacionadas con:
+
+- Acontecimientos naturales.
+- Fenómenos climáticos.
+- Personajes históricos.
+- Desastres.
+- Tradiciones familiares.
+
+No imponer una religión ni asignar creencias obligatorias a todos los habitantes.
+
+## 4.4. Evolución cultural
+
+La cultura debe poder modificarse con el paso de los años.
+
+Las nuevas generaciones pueden conservar, modificar o abandonar tradiciones.
+
+El sistema debe registrar:
+
+- Tradiciones activas.
+- Tradiciones abandonadas.
+- Celebraciones.
+- Creencias.
+- Origen cultural.
+- Acontecimientos que provocaron cambios.
+
+---
+
+# 5. DIPLOMACIA Y CIVILIZACIONES EXTERNAS
+
+Ampliar el mundo de Aldea IA para permitir el contacto con otras comunidades.
+
+Esta funcionalidad debe implementarse de manera progresiva, sin exigir que cada civilización externa tenga la misma complejidad de simulación que la aldea principal.
+
+## 5.1. Comunidades externas
+
+Permitir que aparezcan otras aldeas o asentamientos independientes.
+
+Cada comunidad debe disponer de datos básicos:
+
+- Nombre.
+- Población aproximada.
+- Nivel tecnológico.
+- Recursos disponibles.
+- Necesidades.
+- Economía simplificada.
+- Ubicación.
+- Relaciones con nuestra civilización.
+
+No es necesario representar cada aldeano externo individualmente.
+
+Utilizar una simulación agregada cuando sea suficiente.
+
+## 5.2. Relaciones diplomáticas
+
+Incorporar estados diplomáticos:
+
+- Desconocidos.
+- Neutrales.
+- Comerciales.
+- Aliados.
+- Hostiles.
+
+Las relaciones deben evolucionar según acontecimientos y decisiones.
+
+## 5.3. Comercio exterior
+
+Permitir:
+
+- Comprar alimentos.
+- Vender excedentes.
+- Importar materiales.
+- Exportar productos manufacturados.
+- Intercambiar conocimientos.
+- Negociar acuerdos comerciales.
+
+Las transacciones deben modificar los inventarios y la economía real.
+
+## 5.4. Diplomacia mediante IA
+
+El representante de nuestra civilización podrá evaluar propuestas diplomáticas y recomendar decisiones.
+
+La IA podrá:
+
+- Analizar necesidades.
+- Proponer acuerdos.
+- Evaluar riesgos.
+- Recomendar intercambios.
+- Responder propuestas.
+
+El motor deberá validar los recursos, condiciones y consecuencias de cada acuerdo.
+
+## 5.5. Implementación progresiva
+
+Primero implementar comunidades externas simplificadas y comercio.
+
+Después incorporar relaciones diplomáticas más avanzadas.
+
+No introducir guerras ni sistemas de combate como parte de esta expansión.
+
+No generar conflictos artificiales sin una causa económica, territorial o diplomática.
+
+---
+
+# 6. SISTEMA DE DESCUBRIMIENTOS E INNOVACIÓN
+
+Profundizar las 25 habilidades y las cinco eras existentes.
+
+La civilización debe poder descubrir nuevas técnicas a través de su actividad cotidiana.
+
+No quiero un árbol tecnológico tradicional en el que el jugador simplemente desbloquee tecnologías mediante puntos.
+
+Quiero que las innovaciones puedan surgir del trabajo, la investigación, la experiencia y la transmisión de conocimientos.
+
+## 6.1. Descubrimientos
+
+Ejemplos:
+
+- Un carpintero desarrolla una técnica de construcción más eficiente.
+- Un herrero descubre una mejora para las herramientas.
+- Un agricultor experimenta con nuevos cultivos.
+- Un boticario desarrolla una preparación medicinal.
+- Un constructor encuentra una forma de reducir el consumo de materiales.
+
+Estos descubrimientos deben depender de habilidades, recursos y condiciones reales.
+
+## 6.2. Requisitos
+
+Cada innovación puede requerir:
+
+- Nivel mínimo de habilidad.
+- Experiencia.
+- Materiales.
+- Instalaciones adecuadas.
+- Tiempo de investigación.
+- Conocimientos previos.
+
+No todas las innovaciones deben estar disponibles desde el inicio.
+
+## 6.3. Difusión del conocimiento
+
+Los descubrimientos deben poder transmitirse mediante:
+
+- Maestros.
+- Aprendices.
+- Escuelas.
+- Contratos de aprendizaje.
+- Comercio.
+- Contacto con otras civilizaciones.
+
+Un descubrimiento no debe convertirse automáticamente en conocimiento universal.
+
+Debe existir un proceso de aprendizaje y difusión.
+
+## 6.4. Consecuencias
+
+Las innovaciones deben tener ventajas y posibles costos.
+
+Por ejemplo:
+
+Una técnica nueva puede incrementar la producción, pero exigir materiales más caros.
+
+Registrar cada descubrimiento con:
+
+- Nombre.
+- Autor.
+- Fecha.
+- Profesión.
+- Requisitos.
+- Beneficios.
+- Costos.
+- Estado de difusión.
+
+## 6.5. Progresión tecnológica
+
+Las innovaciones deben respetar las cinco eras existentes:
+
+1. Primitiva.
+2. Piedra.
+3. Madera.
+4. Hierro.
+5. Civilización.
+
+No cambiar ni eliminar el sistema actual de eras.
+
+Ampliarlo mediante descubrimientos compatibles con su progresión.
+
+---
+
+# 7. DESASTRES NATURALES Y CRISIS SISTÉMICAS
+
+Ampliar los sistemas ambientales y sanitarios existentes.
+
+Actualmente existen sequías, lluvias, tormentas, tormentas eléctricas, incendios y enfermedades.
+
+Quiero que estos fenómenos tengan consecuencias encadenadas y produzcan situaciones interesantes.
+
+## 7.1. Nuevos acontecimientos
+
+Evaluar la incorporación de:
+
+- Inundaciones.
+- Plagas agrícolas.
+- Inviernos extremos.
+- Hambrunas.
+- Epidemias.
+- Derrumbes mineros.
+- Escasez prolongada de materiales.
+
+No incorporar todos los eventos de manera indiscriminada.
+
+Cada uno debe ser compatible con el clima, los biomas, los recursos y la economía actuales.
+
+## 7.2. Crisis encadenadas
+
+Las crisis deben afectar a varios sistemas.
+
+Ejemplo:
+
+1. Una sequía reduce la producción agrícola.
+2. Disminuyen las reservas de alimentos.
+3. Aumentan los precios.
+4. Los hogares consumen sus reservas.
+5. Aumenta la desnutrición.
+6. Se deteriora la salud.
+7. Aumenta la mortalidad si la situación continúa.
+8. El gobierno debe buscar soluciones.
+
+Cada consecuencia debe calcularse a partir de los datos reales del motor.
+
+No crear acontecimientos aislados que simplemente muestren un mensaje.
+
+## 7.3. Capacidad de recuperación
+
+La civilización debe poder prepararse para las crisis.
+
+Ejemplos:
+
+- Reservas alimentarias.
+- Infraestructura de drenaje.
+- Almacenes.
+- Hospitales.
+- Protección contra incendios.
+- Diversificación agrícola.
+- Comercio exterior.
+
+Las decisiones preventivas deben reducir riesgos reales.
+
+## 7.4. Intervención Divina
+
+Permitir al jugador provocar, modificar o detener acontecimientos mediante las herramientas existentes y las nuevas que sean necesarias.
+
+No eliminar el control divino sobre el clima y los desastres.
+
+---
+
+# 8. EVOLUCIÓN ARQUITECTÓNICA Y VISUAL DE LA CIVILIZACIÓN
+
+Esta es una de las mejoras visuales más importantes.
+
+Quiero que el progreso de la civilización sea evidente al observar el mapa.
+
+Actualmente existen viviendas, caminos, edificios especiales, granjas, plaza, puente e infraestructura.
+
+Quiero que el aspecto general de la aldea evolucione según su desarrollo.
+
+## 8.1. Etapas arquitectónicas
+
+Incorporar una evolución visual coherente con las cinco eras existentes.
+
+Ejemplo:
+
+**Era Primitiva**
+
+- Construcciones básicas.
+- Viviendas sencillas.
+- Caminos improvisados.
+- Infraestructura limitada.
+
+**Era de Piedra**
+
+- Construcciones más resistentes.
+- Caminos mejorados.
+- Mayor organización del asentamiento.
+
+**Era de Madera**
+
+- Casas de madera.
+- Talleres.
+- Granjas organizadas.
+- Barrios más definidos.
+
+**Era de Hierro**
+
+- Construcciones avanzadas.
+- Edificios especializados.
+- Infraestructura reforzada.
+- Mayor capacidad productiva.
+
+**Era de Civilización**
+
+- Arquitectura avanzada.
+- Plazas desarrolladas.
+- Monumentos.
+- Infraestructura compleja.
+- Centros urbanos organizados.
+
+Estos ejemplos no deben convertirse en una transformación automática de todos los edificios.
+
+Cada construcción debe respetar sus materiales, nivel de mejora, mantenimiento y posibilidades reales.
+
+## 8.2. Barrios y organización territorial
+
+Permitir que los aldeanos organicen progresivamente el territorio.
+
+Posibles zonas:
+
+- Residenciales.
+- Comerciales.
+- Industriales.
+- Agrícolas.
+- Institucionales.
+
+La organización debe surgir de la ubicación de edificios y las necesidades de la población.
+
+No imponer una cuadrícula rígida ni eliminar la libertad de construcción existente.
+
+## 8.3. Evolución visual individual
+
+Las construcciones deben reflejar su estado real.
+
+Considerar:
+
+- Nivel.
+- Materiales.
+- Era.
+- Desgaste.
+- Mejoras.
+- Reparaciones.
+
+Una construcción deteriorada no debe verse igual que una recién reparada.
+
+## 8.4. Rendimiento gráfico
+
+No aumentar innecesariamente la cantidad de elementos dibujados.
+
+Reutilizar los sistemas de renderizado actuales.
+
+Mantener el estilo pixel art existente.
+
+No introducir gráficos 3D ni cambiar radicalmente la identidad visual del juego.
+
+---
+
+# 9. FELICIDAD, REPUTACIÓN Y CALIDAD DE VIDA
+
+Incorporar indicadores sociales que permitan comprender cómo vive realmente la población.
+
+La riqueza económica no debe ser el único indicador de progreso.
+
+Una civilización puede tener muchas monedas y edificios, pero una población descontenta.
+
+## 9.1. Indicadores colectivos
+
+Incorporar:
+
+- Felicidad.
+- Seguridad.
+- Confianza en el gobierno.
+- Calidad de vida.
+- Desigualdad económica.
+- Acceso a educación.
+- Acceso a servicios médicos.
+- Estabilidad social.
+
+Antes de crear variables nuevas, revisar si alguna ya existe y puede reutilizarse.
+
+## 9.2. Cálculo
+
+Cada indicador debe derivarse de datos reales.
+
+Ejemplos:
+
+**Felicidad:**
+
+- Satisfacción de necesidades.
+- Relaciones sociales.
+- Seguridad.
+- Condiciones de vivienda.
+- Acceso a actividades culturales.
+
+**Calidad de vida:**
+
+- Alimentación.
+- Salud.
+- Vivienda.
+- Educación.
+- Servicios.
+- Infraestructura.
+
+**Confianza gubernamental:**
+
+- Resultados de las decisiones.
+- Impuestos.
+- Cumplimiento de promesas.
+- Estabilidad.
+- Atención a peticiones.
+
+No utilizar números aleatorios para simular satisfacción.
+
+## 9.3. Consecuencias sociales
+
+Los indicadores deben influir en:
+
+- Productividad.
+- Migración, si se incorpora.
+- Natalidad.
+- Relaciones.
+- Participación social.
+- Confianza política.
+- Estabilidad de la civilización.
+
+Evitar que un único indicador determine todo el comportamiento de la población.
+
+## 9.4. Interfaz
+
+Incorporar un panel de sociedad con gráficos históricos y valores actuales.
+
+Permitir consultar cómo evolucionaron los indicadores durante años y décadas.
+
+---
+
+# 10. HISTORIA DINÁMICA Y CRÓNICA DE LA CIVILIZACIÓN
+
+Ampliar el sistema de crónica existente.
+
+Quiero que Aldea IA construya una historia real basada en los acontecimientos de la simulación.
+
+No quiero que la IA invente historias para rellenar espacio.
+
+## 10.1. Acontecimientos históricos
+
+Registrar automáticamente acontecimientos importantes.
+
+Ejemplos:
+
+- Fundación de la civilización.
+- Nacimiento de una generación.
+- Construcción del primer hospital.
+- Descubrimiento tecnológico.
+- Epidemia.
+- Gran sequía.
+- Primera exportación comercial.
+- Fallecimiento de una figura histórica.
+- Cambio de gobierno.
+- Construcción de un puente.
+
+## 10.2. Clasificación
+
+Organizar los acontecimientos en categorías:
+
+- Sociales.
+- Familiares.
+- Económicos.
+- Políticos.
+- Tecnológicos.
+- Culturales.
+- Ambientales.
+- Sanitarios.
+- Arquitectónicos.
+
+## 10.3. Biografías
+
+Permitir generar biografías de personajes relevantes.
+
+Las biografías deben basarse en:
+
+- Fecha de nacimiento y fallecimiento.
+- Familia.
+- Profesiones.
+- Habilidades.
+- Descubrimientos.
+- Relaciones.
+- Acontecimientos protagonizados.
+
+## 10.4. Historia por décadas
+
+Crear resúmenes históricos de cada década.
+
+Mostrar:
+
+- Población inicial y final.
+- Crecimiento económico.
+- Cambios tecnológicos.
+- Nuevas construcciones.
+- Crisis.
+- Descubrimientos.
+- Figuras importantes.
+- Evolución cultural.
+
+## 10.5. IA y crónica
+
+La IA puede redactar relatos más naturales y resumir acontecimientos.
+
+Pero debe recibir información estructurada del motor.
+
+No permitir que invente datos, personajes, muertes, construcciones o descubrimientos.
+
+El registro histórico debe conservarse aunque se cambie de proveedor de IA o se juegue sin IA.
+
+Mantener el límite de acontecimientos recientes existente, ampliando el archivo histórico mediante un almacenamiento adecuado.
+
+---
+
+# 11. MEJORA DEL MOTOR: SIMULACIÓN POR NIVELES DE DETALLE
+
+Quiero evaluar e incorporar una optimización del motor para permitir civilizaciones más grandes y partidas más largas.
+
+Esta mejora no debe implicar una reescritura completa del motor.
+
+**No sacrificar la estabilidad ni la precisión de la simulación por conseguir un aumento artificial de rendimiento.**
+
+## 11.1. Simulación detallada y simplificada
+
+Evaluar una arquitectura de simulación por niveles de detalle.
+
+Los aldeanos y elementos importantes pueden recibir cálculos detallados cuando sea necesario.
+
+Los procesos menos relevantes pueden actualizarse mediante cálculos agregados o intervalos menos frecuentes.
+
+Ejemplos:
+
+- Necesidades individuales: actualizar con la frecuencia apropiada.
+- Economía general: calcular mediante procesos agregados.
+- Relaciones familiares: actualizar cuando se producen acontecimientos relevantes.
+- Civilizaciones externas: utilizar estadísticas simplificadas.
+- Estadísticas históricas: actualizar cuando existen cambios significativos.
+
+No utilizar la distancia a la cámara como único criterio de importancia.
+
+Un aldeano fuera de pantalla puede estar protagonizando un nacimiento, una muerte, una construcción o una crisis que debe registrarse correctamente.
+
+La prioridad debe depender de la importancia del evento y del costo computacional.
+
+## 11.2. Separación de procesos
+
+Si la arquitectura actual lo permite, separar:
+
+- Simulación de población.
+- Economía.
+- Producción.
+- Clima.
+- Construcción.
+- Relaciones.
+- Eventos históricos.
+- Renderizado.
+
+No realizar una refactorización masiva si no es necesaria.
+
+Mantener las dependencias claras.
+
+## 11.3. Actualizaciones por intervalos
+
+Evitar cálculos innecesarios en cada fotograma.
+
+El renderizado y la simulación no deben depender obligatoriamente de la misma frecuencia de actualización.
+
+Mantener la coherencia temporal para las velocidades:
+
+- Pausa.
+- x1.
+- x2.
+- x4.
+
+Los resultados deben ser equivalentes independientemente de la frecuencia de renderizado.
+
+## 11.4. Eventos y procesamiento
+
+Evaluar el uso de un sistema centralizado de eventos para comunicar cambios importantes entre módulos.
+
+Por ejemplo:
+
+Un aldeano descubre una tecnología.
+
+El evento debe poder actualizar:
+
+- Su biografía.
+- La crónica.
+- Las estadísticas.
+- El sistema de difusión de conocimientos.
+- Los indicadores tecnológicos.
+
+Evitar que varios módulos modifiquen directamente los mismos datos sin coordinación.
+
+## 11.5. Pruebas de rendimiento
+
+Medir el comportamiento con diferentes cantidades de habitantes.
+
+Comparar el rendimiento antes y después de los cambios.
+
+No afirmar que existe una mejora si no fue medida.
+
+Si una optimización introduce errores temporales o resultados diferentes, no debe incorporarse.
+
+**Si esta arquitectura requiere una modificación demasiado profunda, implementarla únicamente después de presentar una alternativa compatible con el motor actual.**
+
+---
+
+# 12. INTEGRACIÓN CON INTELIGENCIA ARTIFICIAL
+
+Todos los sistemas nuevos deben respetar la arquitectura actual de proveedores.
+
+La IA puede colaborar en:
+
+- Interpretación cultural.
+- Planificación de proyectos.
+- Evaluación de crisis.
+- Diplomacia.
+- Redacción histórica.
+- Administración.
+- Recomendaciones tecnológicas.
+- Análisis social.
+
+Sin embargo, no debe controlar directamente las variables internas.
+
+## Reglas obligatorias
+
+1. La IA propone decisiones.
+2. El motor valida las propuestas.
+3. El motor comprueba los recursos disponibles.
+4. El motor verifica las reglas.
+5. El motor ejecuta la acción.
+6. El motor registra el resultado.
+7. La IA puede recibir el resultado para decidir qué hacer después.
+
+No permitir que una respuesta de texto de Qwen modifique directamente la economía o los datos de un aldeano.
+
+Todas las acciones deben utilizar interfaces internas controladas.
+
+## Modo sin IA
+
+Todas las funcionalidades nuevas deben contar con una alternativa basada en reglas.
+
+Ejemplos:
+
+- Tradiciones mediante condiciones y acontecimientos.
+- Descubrimientos mediante habilidades y requisitos.
+- Proyectos mediante objetivos y prioridades.
+- Diplomacia mediante reglas económicas.
+- Resúmenes históricos mediante plantillas.
+
+El juego debe seguir siendo completamente funcional sin conexión a servicios externos.
+
+---
+
+# 13. INTEGRACIÓN CON INTERVENCIÓN DIVINA
+
+Todas las nuevas funcionalidades deben contemplar la posibilidad de intervención del jugador.
+
+Incorporar controles cuando corresponda para:
+
+- Acelerar el aprendizaje.
+- Forzar descubrimientos.
+- Acelerar construcciones.
+- Modificar indicadores sociales.
+- Crear tradiciones.
+- Provocar o detener crisis.
+- Modificar relaciones diplomáticas.
+- Ayudar a una familia.
+- Alterar acontecimientos históricos.
+- Modificar la evolución cultural.
+
+No es necesario crear un botón para cada variable si puede utilizarse un sistema de herramientas organizado.
+
+La intervención debe poder ser:
+
+- Natural: el jugador no interviene.
+- Asistida: el jugador ayuda parcialmente.
+- Artificial: el jugador acelera o altera el desarrollo.
+
+No restringir las herramientas divinas existentes.
+
+Cuando corresponda, registrar las intervenciones para permitir comparar el desarrollo natural con el desarrollo provocado por el jugador.
+
+---
+
+# 14. INTERFAZ Y EXPERIENCIA DE USUARIO
+
+No quiero que las nuevas funcionalidades conviertan la interfaz en un panel saturado de información.
+
+Reutilizar el diseño y los componentes existentes.
+
+Crear nuevos paneles o secciones cuando sea necesario:
+
+1. Familias y generaciones.
+2. Cultura y tradiciones.
+3. Diplomacia.
+4. Descubrimientos.
+5. Crisis y desastres.
+6. Sociedad y calidad de vida.
+7. Historia y biografías.
+8. Estadísticas de rendimiento.
+
+Mantener:
+
+- Diseño pixel art.
+- Legibilidad.
+- Compatibilidad con diferentes resoluciones.
+- Navegación sencilla.
+- Inspector existente.
+- Mapa principal.
+- Paneles actuales.
+- Controles de cámara.
+
+Los datos históricos deben poder consultarse sin afectar el rendimiento de la simulación.
+
+---
+
+# 15. PERSISTENCIA Y COMPATIBILIDAD DE PARTIDAS
+
+Este apartado es obligatorio.
+
+No quiero perder partidas existentes.
+
+Antes de modificar los modelos de datos:
+
+1. Identificar el formato de guardado actual.
+2. Identificar los campos existentes.
+3. Diseñar una estrategia de migración.
+4. Mantener compatibilidad con partidas anteriores.
+5. Crear valores predeterminados para los nuevos campos.
+
+Si se incorpora una nueva estructura de datos, debe tener una versión identificable.
+
+Por ejemplo:
+
+- Partidas antiguas: versión anterior.
+- Partidas nuevas: versión actualizada.
+
+La migración debe ejecutarse de manera controlada.
+
+Nunca eliminar datos desconocidos durante una migración.
+
+No reemplazar partidas guardadas automáticamente sin confirmación.
+
+No romper:
+
+- Guardado local.
+- Guardado en servidor.
+- Descarga de partidas.
+- Importación de partidas.
+- Reinicio.
+- Exportación JSON.
+
+Si una migración falla, conservar intacta la partida original.
+
+---
+
+# 16. REGLAS DE IMPLEMENTACIÓN Y PREVENCIÓN DE ERRORES
+
+Estas instrucciones tienen prioridad sobre cualquier decisión de implementación.
+
+## 16.1. No reconstruir el proyecto
+
+No reemplazar archivos completos cuando sea posible modificar módulos específicos.
+
+No eliminar funcionalidades actuales.
+
+No cambiar el sistema de coordenadas del mapa.
+
+No cambiar el calendario de 120 días.
+
+No alterar el ciclo de 7 minutos de día y 3 minutos de noche.
+
+No modificar arbitrariamente las velocidades de simulación.
+
+No cambiar los materiales, edificios, profesiones o reglas económicas existentes para simplificar la implementación.
+
+## 16.2. No duplicar funcionalidades
+
+Antes de crear un sistema:
+
+- Revisar si ya existe.
+- Identificar sus dependencias.
+- Determinar qué puede reutilizarse.
+- Extenderlo en lugar de duplicarlo.
+
+## 16.3. Evitar datos inconsistentes
+
+Todos los cambios deben respetar las reglas del motor.
+
+Ejemplos:
+
+- No permitir descubrimientos sin requisitos.
+- No permitir construcciones sin materiales, salvo intervención divina.
+- No permitir intercambios sin recursos.
+- No permitir nacimientos sin respetar las reglas existentes.
+- No permitir que una tradición genere beneficios sin costo.
+- No permitir que la IA invente habitantes o acontecimientos.
+- No permitir que una crisis modifique estadísticas sin una causa registrada.
+
+## 16.4. Control de errores
+
+Incorporar validaciones para:
+
+- Valores nulos.
+- Datos faltantes.
+- Valores fuera de rango.
+- Referencias a aldeanos inexistentes.
+- Familias sin integrantes.
+- Edificios eliminados.
+- Recursos insuficientes.
+- Respuestas inválidas de IA.
+- Errores de guardado.
+- Migraciones incompletas.
+
+Evitar errores silenciosos.
+
+Registrar los errores técnicos sin saturar la interfaz del jugador.
+
+## 16.5. Rendimiento
+
+No introducir cálculos pesados en cada fotograma.
+
+No ejecutar llamadas de IA constantemente.
+
+No generar acontecimientos históricos duplicados.
+
+No recorrer innecesariamente todos los aldeanos para actualizar un único dato.
+
+No generar cientos de elementos visuales nuevos sin considerar el rendimiento.
+
+---
+
+# 17. PLAN DE IMPLEMENTACIÓN OBLIGATORIO
+
+No quiero que intentes implementar todo de manera desordenada.
+
+Dividí el trabajo en etapas.
+
+### ETAPA 1 — Auditoría y preparación
+
+- Analizar arquitectura.
+- Identificar módulos existentes.
+- Identificar riesgos.
+- Diseñar las nuevas estructuras.
+- Comprobar compatibilidad.
+- Preparar migraciones.
+- Definir pruebas.
+
+No realizar cambios destructivos.
+
+### ETAPA 2 — Generaciones, familias y cultura
+
+Implementar:
+
+- Legado familiar.
+- Figuras históricas.
+- Evolución generacional.
+- Tradiciones.
+- Festividades.
+- Creencias opcionales.
+
+Verificar que los sistemas familiares actuales sigan funcionando.
+
+### ETAPA 3 — Descubrimientos y tecnología
+
+Implementar:
+
+- Innovaciones.
+- Requisitos.
+- Difusión.
+- Transmisión de conocimientos.
+- Compatibilidad con las cinco eras.
+
+Verificar las 25 habilidades existentes.
+
+### ETAPA 4 — Sociedad y calidad de vida
+
+Implementar:
+
+- Felicidad.
+- Seguridad.
+- Confianza gubernamental.
+- Calidad de vida.
+- Desigualdad.
+- Indicadores históricos.
+
+Verificar su relación con la economía, salud y gobernanza.
+
+### ETAPA 5 — Crisis ambientales
+
+Implementar los nuevos eventos y sus consecuencias encadenadas.
+
+Verificar la interacción con clima, cultivos, alimentos, salud y economía.
+
+### ETAPA 6 — Historia dinámica
+
+Implementar:
+
+- Archivo histórico.
+- Biografías.
+- Resúmenes por décadas.
+- Clasificación de acontecimientos.
+- Redacción asistida por IA.
+
+Verificar que todos los acontecimientos correspondan a datos reales.
+
+### ETAPA 7 — Diplomacia
+
+Implementar primero comunidades externas simplificadas.
+
+Después:
+
+- Comercio exterior.
+- Relaciones.
+- Acuerdos.
+- Integración con el representante.
+
+No incorporar combate.
+
+### ETAPA 8 — Evolución visual
+
+Implementar la evolución arquitectónica.
+
+Verificar que los edificios existentes sigan siendo reconocibles y que sus estados reales coincidan con su apariencia.
+
+### ETAPA 9 — Optimización del motor
+
+Evaluar e implementar simulación por niveles de detalle, actualización por intervalos y procesamiento de eventos.
+
+No modificar el motor completo si no es necesario.
+
+### ETAPA 10 — Integración y pruebas generales
+
+Verificar la interacción de todos los sistemas nuevos con los existentes.
+
+Comprobar partidas nuevas y partidas anteriores.
+
+Comprobar todos los modos de IA.
+
+Comprobar el modo sin IA.
+
+Comprobar las herramientas divinas.
+
+Comprobar guardado y recuperación.
+
+---
+
+# 18. PRUEBAS DE ACEPTACIÓN OBLIGATORIAS
+
+La implementación no se considera terminada simplemente porque la aplicación compile.
+
+Debe verificarse el comportamiento real.
+
+Realizar, como mínimo, las siguientes pruebas:
+
+**Prueba A — Partida inicial**
+
+Crear una partida nueva con diez fundadores.
+
+Verificar que las familias, las necesidades y los trabajos sigan funcionando.
+
+**Prueba B — Evolución generacional**
+
+Simular varios años.
+
+Verificar nacimientos, fallecimientos, descendientes, herencias de conocimientos y registros familiares.
+
+**Prueba C — Cultura**
+
+Provocar acontecimientos que puedan generar tradiciones.
+
+Verificar su creación, persistencia y efectos.
+
+**Prueba D — Descubrimientos**
+
+Crear las condiciones necesarias para una innovación.
+
+Verificar requisitos, autoría, beneficios y difusión.
+
+**Prueba E — Crisis**
+
+Provocar una sequía.
+
+Verificar que afecte a cultivos, alimentos, precios, salud y estabilidad según las reglas implementadas.
+
+**Prueba F — Calidad de vida**
+
+Modificar las condiciones económicas y sanitarias.
+
+Verificar que los indicadores sociales reaccionen correctamente.
+
+**Prueba G — Historia**
+
+Provocar una construcción, un nacimiento y un acontecimiento importante.
+
+Verificar que se registren correctamente y no se dupliquen.
+
+**Prueba H — Diplomacia**
+
+Crear una comunidad externa.
+
+Verificar comercio, recursos y relaciones.
+
+**Prueba I — Intervención Divina**
+
+Modificar recursos, acelerar un descubrimiento y provocar una crisis.
+
+Verificar que el jugador conserve sus capacidades.
+
+**Prueba J — IA**
+
+Probar Qwen 2.5:3B y, cuando estén configurados, los proveedores externos.
+
+Verificar que las decisiones se validen mediante el motor.
+
+**Prueba K — Sin IA**
+
+Desconectar todos los proveedores.
+
+Verificar que la civilización siga progresando.
+
+**Prueba L — Persistencia**
+
+Guardar una partida, cerrarla y recuperarla.
+
+Verificar que toda la información nueva y antigua se conserve.
+
+**Prueba M — Compatibilidad**
+
+Abrir una partida anterior a esta expansión.
+
+Verificar que pueda migrarse sin perder información.
+
+**Prueba N — Rendimiento**
+
+Comparar el funcionamiento del motor antes y después de las optimizaciones con diferentes cantidades de habitantes.
+
+**Prueba O — Integridad general**
+
+Comprobar que siguen funcionando:
+
+- Cámara.
+- Zoom.
+- Movimiento.
+- Mapa.
+- Río.
+- Bosque.
+- Montañas.
+- Estaciones.
+- Clima.
+- Ciclo día/noche.
+- Calendario.
+- Edificios.
+- Granjas.
+- Economía.
+- Familias.
+- Enfermedades.
+- Leyes.
+- Representante.
+- Chat.
+- Crónica.
+- Guardado.
+- Descarga.
+- Reinicio.
+
+---
+
+# 19. CONDICIONES PARA DAR POR TERMINADO EL TRABAJO
+
+La expansión se considera finalizada cuando:
+
+1. Todas las funcionalidades seleccionadas están implementadas o se documenta claramente cualquier limitación técnica.
+2. Los sistemas nuevos interactúan con el motor existente.
+3. La civilización puede progresar sin IA.
+4. La civilización puede utilizar Qwen 2.5:3B.
+5. La civilización puede utilizar otros proveedores compatibles.
+6. El jugador conserva todas sus herramientas de Intervención Divina.
+7. Las partidas anteriores pueden recuperarse.
+8. Los sistemas históricos y familiares persisten correctamente.
+9. Las nuevas funcionalidades no generan duplicaciones ni inconsistencias.
+10. La aplicación compila y supera las pruebas de aceptación.
+11. La versión portable y la versión con servidor mantienen su compatibilidad, dentro de las limitaciones propias de cada modalidad.
+12. No quedan errores críticos conocidos sin documentar.
+
+Si una funcionalidad no puede implementarse de forma segura con la arquitectura actual, no fuerces una solución que comprometa el juego.
+
+Documentá el problema, explicá qué módulo necesita modificaciones y proponé la alternativa menos invasiva.
+
+---
+
+# 20. RESULTADO QUE QUIERO CONSEGUIR
+
+Quiero que Aldea IA evolucione hacia un simulador de civilización en el que cada partida pueda desarrollar una historia propia.
+
+Quiero comenzar con diez fundadores y poder observar cómo, después de décadas o siglos, sus descendientes construyen una sociedad completamente diferente.
+
+Quiero ver familias que dejan un legado, tecnologías que surgen del trabajo, tradiciones que nacen de acontecimientos, crisis que ponen a prueba a la población, relaciones comerciales con otras comunidades y ciudades que cambian visualmente a medida que progresan.
+
+Quiero poder observar una civilización que prospera por sus propios medios, sin que tenga que intervenir constantemente.
+
+Y también quiero poder intervenir cuando quiera.
+
+Puedo ayudarla a superar una sequía, acelerar una investigación, regalar recursos, modificar su economía o incluso provocar un desastre que cambie su historia para siempre.
+
+**No quiero que la inteligencia artificial juegue en lugar del motor. Quiero que la inteligencia artificial ayude a construir una civilización que el motor sea capaz de simular realmente.**
+
+Tampoco quiero que el motor sea una simple herramienta que ejecuta órdenes del jugador.
+
+Quiero que sea capaz de mantener una sociedad viva, funcional y autónoma.
+
+La IA, cuando esté disponible, debe enriquecer esa autonomía, no reemplazarla.
+
+El modo sin IA debe seguir siendo una experiencia completa.
+
+La Intervención Divina debe seguir siendo una característica central.
+
+Y cada partida debe tener la posibilidad de convertirse en una historia diferente.
+
+**Ese es el verdadero objetivo de esta expansión de Aldea IA.**
+
+---
+
+# INSTRUCCIÓN FINAL PARA GOOGLE AI STUDIO
+
+Antes de empezar a modificar el código, realizá una auditoría de la arquitectura y elaborá un plan de implementación concreto.
+
+No te limites a responder con recomendaciones: una vez validada la arquitectura, ejecutá los cambios sobre el proyecto existente.
+
+Trabajá de manera incremental, conservando los sistemas actuales y verificando cada etapa antes de continuar.
+
+No declares terminada una funcionalidad sin comprobar que funciona realmente.
+
+No ocultes errores, no simules funcionalidades que todavía no existen y no reemplaces sistemas funcionales por implementaciones simplificadas.
+
+Si necesitás dividir el trabajo en varias sesiones o entregas por límites técnicos, conservá un registro de lo realizado, los archivos modificados, las pruebas ejecutadas y los pendientes, para poder continuar sin perder contexto.
+
+**La prioridad no es terminar rápido. La prioridad es conseguir una expansión estable, coherente y funcional que haga evolucionar Aldea IA sin destruir lo que ya construimos.**

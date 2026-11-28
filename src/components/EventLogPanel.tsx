@@ -21,6 +21,14 @@ const CATEGORY_COLORS: Record<ChronicleArchiveEntry['category'], string> = {
   politics: 'text-sky-300',
   economy: 'text-amber-300',
   crisis: 'text-rose-400',
+  social: 'text-cyan-300',
+  family: 'text-pink-300',
+  technology: 'text-indigo-300',
+  culture: 'text-fuchsia-300',
+  environment: 'text-teal-300',
+  health: 'text-emerald-300',
+  architecture: 'text-orange-300',
+  diplomacy: 'text-blue-300',
 };
 
 const CATEGORY_LABELS: Record<ChronicleArchiveEntry['category'], string> = {
@@ -29,6 +37,14 @@ const CATEGORY_LABELS: Record<ChronicleArchiveEntry['category'], string> = {
   politics: 'Política',
   economy: 'Economía',
   crisis: 'Crisis',
+  social: 'Social',
+  family: 'Familias',
+  technology: 'Saber',
+  culture: 'Cultura',
+  environment: 'Entorno',
+  health: 'Salud',
+  architecture: 'Obras',
+  diplomacy: 'Diplomacia',
 };
 
 const MAX_DISPLAYED_LOGS = 30;
@@ -98,7 +114,21 @@ export function EventLogPanel({ logs, chronicleArchive = [] }: EventLogPanelProp
 
       {!minimized && viewMode === 'archive' && (
         <div className="flex items-center gap-1 flex-wrap shrink-0">
-          {(['all', 'natural', 'divine', 'politics', 'economy', 'crisis'] as const).map((cat) => (
+          {(
+            [
+              'all',
+              'natural',
+              'family',
+              'technology',
+              'culture',
+              'diplomacy',
+              'crisis',
+              'architecture',
+              'economy',
+              'politics',
+              'divine',
+            ] as const
+          ).map((cat) => (
             <button
               key={cat}
               type="button"

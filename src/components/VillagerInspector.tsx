@@ -88,6 +88,8 @@ interface VillagerInspectorProps {
   onDeleteBridge: () => void;
   onDivineChangeAge?: (id: number, deltaYears: number) => void;
   onDivineChangeJob?: (id: number, job: JobType) => void;
+  lineageSurname?: string | null;
+  knownDiscoveryNames?: string[];
 }
 
 type AgentInspectorTab = 'general' | 'mind' | 'inventory' | 'options';
@@ -169,6 +171,8 @@ export function VillagerInspector({
   onDeleteBridge,
   onDivineChangeAge,
   onDivineChangeJob,
+  lineageSurname = null,
+  knownDiscoveryNames = [],
 }: VillagerInspectorProps) {
   const [minimized, setMinimized] = useState(false);
   const [agentTab, setAgentTab] = useState<AgentInspectorTab>('general');
@@ -962,6 +966,7 @@ export function VillagerInspector({
                 <div className="flex justify-between gap-2 flex-wrap">
                   <span className="text-slate-400">Linaje{mentorName ? ' / Mentor' : ''}</span>
                   <span>
+                    {lineageSurname ? `${lineageSurname} · ` : ''}
                     {agent.parents ?? 'Fundador'}
                     {mentorName ? ` · Mentor: ${mentorName}` : ''}
                   </span>
@@ -1102,6 +1107,18 @@ export function VillagerInspector({
                     ))
                   )}
                 </div>
+                {knownDiscoveryNames.length > 0 && (
+                  <div className="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5">
+                    {knownDiscoveryNames.slice(0, 5).map((dName) => (
+                      <span
+                        key={dName}
+                        className="px-2 py-0.5 rounded bg-emerald-950/50 border border-emerald-700/50 text-[11px] text-emerald-200"
+                      >
+                        {dName}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div

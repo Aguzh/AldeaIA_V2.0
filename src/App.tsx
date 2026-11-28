@@ -87,14 +87,26 @@ import {
   createDefaultAIConfig,
   ensureAIConfig,
   getAIProviderBadge,
+  queryAIProvider,
   syncLegacyOllamaFromAIConfig,
 } from './simulation/aiProviders';
+import { ensureAllExpansionDefaults } from './simulation/civilizationPipeline';
+import { divineAidFamily, divineSparkTraditionOrFestival } from './simulation/cultureAndFamilies';
+import { DISCOVERY_CATALOG, divineAccelerateDiscovery } from './simulation/discoveries';
+import {
+  buildDiplomaticProposalSummary,
+  divineModifyDiplomacy,
+  executeExternalTrade,
+  TRADE_GOOD_LABELS,
+} from './simulation/diplomacy';
+import { divineAdjustSocietyIndicator, divineResolveAllCrises } from './simulation/crisesAndSociety';
 import { soundEngine } from './audio/soundEngine';
 import type {
   AIProviderConfig,
   Agent,
   AnimalType,
   BiomeType,
+  DiplomaticRelation,
   DivineMultipliers,
   DivineTool,
   HouseStorage,
@@ -107,6 +119,7 @@ import type {
   SeasonType,
   SelectedEntity,
   SimulationState,
+  TradeGoodKey,
   VillageLawId,
   WeatherType,
 } from './types/simulation';
@@ -120,6 +133,8 @@ import { StatsModal } from './components/StatsModal';
 import { SaveLoadModal } from './components/SaveLoadModal';
 import { DownloadLocalModal } from './components/DownloadLocalModal';
 import { FamiliasModal } from './components/FamiliasModal';
+import { CivilizationModal } from './components/CivilizationModal';
+import { getSpriteLoadRevision } from './render/spriteLoader';
 
 const SAVE_STORAGE_KEY = 'aldea_ia_save_v1';
 
@@ -231,7 +246,7 @@ export function hydrateSimulationState(parsed: Partial<SimulationState>): Simula
 
   const nextState: SimulationState = {
     ...base,
-    schemaVersion: typeof parsed.schemaVersion === 'number' ? parsed.schemaVersion : 1,
+    schemaVersion: 3,
     pendingSounds: [],
     day: parsedDay,
     minute: clamp(finiteOr(parsed.minute, base.minute), 0, 1440),
@@ -297,7 +312,21 @@ export function hydrateSimulationState(parsed: Partial<SimulationState>): Simula
     representativeGoals: parsed.representativeGoals
       ? { ...createDefaultRepresentativeGoals(parsedDay), ...parsed.representativeGoals }
       : createDefaultRepresentativeGoals(parsedDay),
-    chronicleArchive: Array.isArray(parsed.chronicleArchive) ? parsed.chronicleArchive.slice(0, 300) : [],
+    chronicleArchive: Array.isArray(parsed.chronicleArchive) ? parsed.chronicleArchive.slice(0, 400) : [],
+    familyLineages: Array.isArray(parsed.familyLineages) ? parsed.familyLineages : undefined,
+    historicalFigures: Array.isArray(parsed.historicalFigures) ? parsed.historicalFigures : undefined,
+    culture: parsed.culture && typeof parsed.culture === 'object' ? parsed.culture : undefined,
+    discoveries: Array.isArray(parsed.discoveries) ? parsed.discoveries : undefined,
+    externalCommunities: Array.isArray(parsed.externalCommunities) ? parsed.externalCommunities : undefined,
+    externalTradeHistory: Array.isArray(parsed.externalTradeHistory) ? parsed.externalTradeHistory : undefined,
+    crisisMonitor: parsed.crisisMonitor && typeof parsed.crisisMonitor === 'object' ? parsed.crisisMonitor : undefined,
+    districts: Array.isArray(parsed.districts) ? parsed.districts : undefined,
+    societyIndicators:
+      parsed.societyIndicators && typeof parsed.societyIndicators === 'object' ? parsed.societyIndicators : undefined,
+    societyHistory: Array.isArray(parsed.societyHistory) ? parsed.societyHistory.slice(-60) : undefined,
+    biographies: Array.isArray(parsed.biographies) ? parsed.biographies : undefined,
+    decadeSummaries: Array.isArray(parsed.decadeSummaries) ? parsed.decadeSummaries : undefined,
+    perfStats: parsed.perfStats && typeof parsed.perfStats === 'object' ? parsed.perfStats : undefined,
     milestones:
       Array.isArray(parsed.milestones) && parsed.milestones.length > 0
         ? parsed.milestones
@@ -485,6 +514,13 @@ export function hydrateSimulationState(parsed: Partial<SimulationState>): Simula
               illness: a.illness ?? null,
               assignedBuildingId: typeof a.assignedBuildingId === 'number' ? a.assignedBuildingId : null,
               activeConstruction: a.activeConstruction ?? null,
+              birthDay: typeof a.birthDay === 'number' ? a.birthDay : Math.max(1, parsedDay - Math.round(finiteOr(a.ageYears, 20))),
+              familyId: typeof a.familyId === 'string' ? a.familyId : undefined,
+              motherId: typeof a.motherId === 'number' ? a.motherId : undefined,
+              fatherId: typeof a.fatherId === 'number' ? a.fatherId : undefined,
+              jobsHeld: Array.isArray(a.jobsHeld) ? a.jobsHeld : [validJob],
+              discoveriesAuthored: Array.isArray(a.discoveriesAuthored) ? a.discoveriesAuthored : [],
+              knownDiscoveries: Array.isArray(a.knownDiscoveries) ? a.knownDiscoveries : [],
               inv: {
                 food: Math.max(0, finiteOr(a.inv?.food, 0)),
                 wood: Math.max(0, finiteOr(a.inv?.wood, 0)),
@@ -528,6 +564,7 @@ export function hydrateSimulationState(parsed: Partial<SimulationState>): Simula
 
   syncLegacyOllamaFromAIConfig(nextState);
   ensureCivilizationDefaults(nextState);
+  ensureAllExpansionDefaults(nextState);
   syncSpecialBuildingStaff(nextState);
   recalculateEconomyReserve(nextState);
   electRepresentative(nextState);
@@ -567,6 +604,9 @@ export default function App() {
   const [isOllamaOpen, setIsOllamaOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isFamiliesOpen, setIsFamiliesOpen] = useState(false);
+  const [isCivilizationOpen, setIsCivilizationOpen] = useState(false);
+  const [diplomacyAdvice, setDiplomacyAdvice] = useState<string | null>(null);
+  const [isDiplomacyAdvisorBusy, setIsDiplomacyAdvisorBusy] = useState(false);
   const [isSaveLoadOpen, setIsSaveLoadOpen] = useState(false);
   const [isDownloadOpen, setIsDownloadOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
@@ -577,7 +617,11 @@ export default function App() {
   const [soundVolume, setSoundVolume] = useState<number>(() => soundEngine.getVolume());
   const [serverSyncStatus, setServerSyncStatus] = useState<string>('Sincronizado');
 
-  const syncUI = () => setTickVersion((v) => v + 1);
+  const canvasDirtyRef = useRef<boolean>(true);
+  const syncUI = () => {
+    canvasDirtyRef.current = true;
+    setTickVersion((v) => v + 1);
+  };
 
   useEffect(() => {
     const unlockOnGesture = () => {
@@ -810,14 +854,20 @@ export default function App() {
 
   useEffect(() => {
     let rafId = 0;
-    let frameCount = 0;
     let lastTs = performance.now();
+    let lastRenderTs = 0;
+    let lastRenderCostMs = 0;
+    let lastUiSyncTs = 0;
+    let lastCamKey = '';
+    let lastSpriteRev = -1;
 
     const loop = (now: number) => {
       const elapsedSec = clamp((now - lastTs) / 1000, 0.001, 0.1);
       lastTs = now;
       const state = stateRef.current;
-      tickSimulation(state, elapsedSec);
+      if (state.speed > 0) {
+        tickSimulation(state, elapsedSec);
+      }
       if (Array.isArray(state.pendingSounds) && state.pendingSounds.length > 0) {
         const cues = state.pendingSounds.splice(0, state.pendingSounds.length);
         for (const cue of cues) {
@@ -830,15 +880,36 @@ export default function App() {
         paused: state.speed === 0,
         hasLivingVillagers: state.agents.length > 0,
       });
-      const canvas = canvasRef.current;
-      if (canvas) {
-        const ctx = canvas.getContext('2d');
-        if (ctx) renderWorld(ctx, state, cameraRef.current);
+
+      const cam = cameraRef.current;
+      const camKey = `${cam.zoom}:${cam.panX}:${cam.panY}`;
+      const spriteRev = getSpriteLoadRevision();
+      const minRenderGap = state.speed === 0 ? Infinity : Math.max(33, lastRenderCostMs * 1.4);
+      const shouldRender =
+        canvasDirtyRef.current ||
+        camKey !== lastCamKey ||
+        spriteRev !== lastSpriteRev ||
+        (state.speed > 0 && now - lastRenderTs >= minRenderGap);
+
+      if (shouldRender) {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            const rt0 = performance.now();
+            renderWorld(ctx, state, cam);
+            lastRenderCostMs = Math.min(250, performance.now() - rt0);
+            lastRenderTs = now;
+            lastCamKey = camKey;
+            lastSpriteRev = spriteRev;
+            canvasDirtyRef.current = false;
+          }
+        }
       }
 
-      frameCount++;
-      if (frameCount % 6 === 0) {
-        syncUI();
+      if (state.speed > 0 && now - lastUiSyncTs >= 120) {
+        lastUiSyncTs = now;
+        setTickVersion((v) => v + 1);
       }
       rafId = requestAnimationFrame(loop);
     };
@@ -1715,6 +1786,90 @@ export default function App() {
     syncUI();
   }
 
+  function handleExternalTrade(
+    communityId: string,
+    kind: 'import' | 'export' | 'knowledge',
+    good: TradeGoodKey,
+    amount: number
+  ) {
+    executeExternalTrade(stateRef.current, communityId, kind, good, amount);
+    void saveStateToServer(true);
+    syncUI();
+  }
+
+  async function handleRequestDiplomacyAdvice() {
+    const s = stateRef.current;
+    const fallback = buildDiplomaticProposalSummary(s);
+    const cfg = ensureAIConfig(s);
+    if (cfg.modality === 'none' || cfg.status === 'disabled') {
+      setDiplomacyAdvice(
+        fallback
+          ? `Consejo automático (${fallback.communityName}): ${fallback.recommendedKind === 'import' ? 'Importar' : fallback.recommendedKind === 'export' ? 'Exportar' : 'Intercambiar saber'} (${TRADE_GOOD_LABELS[fallback.good]}). ${fallback.rationale}`
+          : 'No hay comunidades contactadas aún; seguí explorando o construí Muelle/Mercado.'
+      );
+      return;
+    }
+
+    setIsDiplomacyAdvisorBusy(true);
+    try {
+      const commsSummary = (s.externalCommunities ?? [])
+        .map((c) => `${c.name} (${c.relation}, confianza ${c.trust}%, necesita ${c.needs.join('/')})`)
+        .join('; ');
+      const res = await queryAIProvider(cfg, {
+        systemPrompt:
+          'Sos el consejero diplomático de Aldea IA. Responde en español en máximo 2 oraciones concretas recomendando comercio o intercambio cultural pacífico.',
+        userPrompt: `Día ${s.day}, Era ${s.era}, Población ${s.agents.length}. Comunidades: ${commsSummary}.`,
+      });
+      if (res.ok && res.text.trim()) {
+        setDiplomacyAdvice(res.text.trim());
+      } else {
+        setDiplomacyAdvice(
+          fallback
+            ? `Consejo local (${fallback.communityName}): ${fallback.rationale}`
+            : 'Mantené relaciones comerciales pacíficas según existencias reales.'
+        );
+      }
+    } catch {
+      setDiplomacyAdvice(
+        fallback
+          ? `Consejo local (${fallback.communityName}): ${fallback.rationale}`
+          : 'Mantené intercambios graduales con comunidades vecinas.'
+      );
+    } finally {
+      setIsDiplomacyAdvisorBusy(false);
+    }
+  }
+
+  function handleDivineModifyDiplomacy(communityId: string, relation: DiplomaticRelation) {
+    divineModifyDiplomacy(stateRef.current, communityId, relation);
+    syncUI();
+  }
+
+  function handleDivineSparkFestival() {
+    divineSparkTraditionOrFestival(stateRef.current);
+    syncUI();
+  }
+
+  function handleDivineAccelerateDiscovery() {
+    divineAccelerateDiscovery(stateRef.current);
+    syncUI();
+  }
+
+  function handleDivineMitigateCrises() {
+    divineResolveAllCrises(stateRef.current);
+    syncUI();
+  }
+
+  function handleDivineAdjustSociety(target: 'happiness' | 'trust' | 'security', delta: number) {
+    divineAdjustSocietyIndicator(stateRef.current, target, delta);
+    syncUI();
+  }
+
+  function handleDivineAidFamily(familyId?: string) {
+    divineAidFamily(stateRef.current, familyId);
+    syncUI();
+  }
+
   function handleSaveLocal() {
     try {
       localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(stateRef.current));
@@ -1779,9 +1934,21 @@ export default function App() {
   }
 
   ensureCivilizationDefaults(state);
+  ensureAllExpansionDefaults(state);
   const aiConfig = ensureAIConfig(state);
   const aiBadge = getAIProviderBadge(aiConfig, state.ollama);
   const activeConstructionsCount = state.agents.filter((a) => Boolean(a.activeConstruction)).length;
+  const activeCrisesCount = state.crisisMonitor?.activeCrises.length ?? 0;
+  const selectedLineageSurname = selectedAgent?.familyId
+    ? state.familyLineages?.find((l) => l.id === selectedAgent.familyId)?.surname ?? null
+    : null;
+  const selectedKnownDiscoveryNames = selectedAgent
+    ? Array.from(
+        new Set([...(selectedAgent.discoveriesAuthored ?? []), ...(selectedAgent.knownDiscoveries ?? [])])
+      )
+        .map((id) => DISCOVERY_CATALOG.find((bp) => bp.id === id)?.name ?? id)
+        .filter(Boolean)
+    : [];
 
   const savedSummary = readSavedSummary();
   const petition = state.pendingPetition;
@@ -1823,6 +1990,8 @@ export default function App() {
         onSetLayout={handleSetLayout}
         onOpenStats={() => setIsStatsOpen(true)}
         onOpenFamilies={() => setIsFamiliesOpen(true)}
+        onOpenCivilization={() => setIsCivilizationOpen(true)}
+        activeCrisesCount={activeCrisesCount}
         onOpenSaveLoad={() => setIsSaveLoadOpen(true)}
         onOpenDownload={() => setIsDownloadOpen(true)}
         onRequestReset={() => setIsResetConfirmOpen(true)}
@@ -2023,6 +2192,13 @@ export default function App() {
             onDivineAdjustTax={handleDivineAdjustTax}
             onDivineForceSeason={handleDivineForceSeason}
             onDivineGrantKnowledge={handleDivineGrantKnowledge}
+            qualityOfLife={state.societyIndicators?.qualityOfLife ?? 70}
+            activeCrisesCount={activeCrisesCount}
+            onDivineAccelerateDiscovery={handleDivineAccelerateDiscovery}
+            onDivineSparkFestival={handleDivineSparkFestival}
+            onDivineMitigateCrises={handleDivineMitigateCrises}
+            onDivineAdjustSociety={handleDivineAdjustSociety}
+            onDivineAidTopFamily={() => handleDivineAidFamily()}
           />
         </aside>
 
@@ -2081,6 +2257,8 @@ export default function App() {
             onDeleteBridge={handleDeleteBridge}
             onDivineChangeAge={handleDivineChangeAge}
             onDivineChangeJob={handleDivineChangeJob}
+            lineageSurname={selectedLineageSurname}
+            knownDiscoveryNames={selectedKnownDiscoveryNames}
           />
           <EventLogPanel logs={state.logs} chronicleArchive={state.chronicleArchive ?? []} />
         </aside>
@@ -2187,6 +2365,9 @@ export default function App() {
           agents={state.agents}
           houses={state.houses}
           animals={state.animals}
+          familyLineages={state.familyLineages ?? []}
+          historicalFigures={state.historicalFigures ?? []}
+          interventionMode={state.interventionMode ?? 'intervention'}
           highlightedAgentId={state.highlightFamilyAgentId}
           onHighlightFamily={handleHighlightFamily}
           onSelectAgent={(id) => {
@@ -2195,7 +2376,28 @@ export default function App() {
             setIsFamiliesOpen(false);
             syncUI();
           }}
+          onDivineAidFamily={handleDivineAidFamily}
           onClose={() => setIsFamiliesOpen(false)}
+        />
+      )}
+
+      {isCivilizationOpen && (
+        <CivilizationModal
+          state={state}
+          isDiplomacyAdvisorBusy={isDiplomacyAdvisorBusy}
+          diplomacyAdvice={diplomacyAdvice}
+          onExternalTrade={handleExternalTrade}
+          onRequestDiplomacyAdvice={() => void handleRequestDiplomacyAdvice()}
+          onDivineModifyDiplomacy={handleDivineModifyDiplomacy}
+          onDivineSparkFestival={handleDivineSparkFestival}
+          onDivineAccelerateDiscovery={handleDivineAccelerateDiscovery}
+          onDivineMitigateCrises={handleDivineMitigateCrises}
+          onSelectAgent={(id) => {
+            stateRef.current.selectedAgentId = id;
+            stateRef.current.selectedEntity = { kind: 'agent', id };
+            syncUI();
+          }}
+          onClose={() => setIsCivilizationOpen(false)}
         />
       )}
 

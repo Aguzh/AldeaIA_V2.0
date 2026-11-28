@@ -82,6 +82,13 @@ interface WorldControlsPanelProps {
   onDivineAdjustTax: (taxPct: number) => void;
   onDivineForceSeason: (season: SeasonType) => void;
   onDivineGrantKnowledge: (delta: number) => void;
+  qualityOfLife?: number;
+  activeCrisesCount?: number;
+  onDivineAccelerateDiscovery?: () => void;
+  onDivineSparkFestival?: () => void;
+  onDivineMitigateCrises?: () => void;
+  onDivineAdjustSociety?: (target: 'happiness' | 'trust' | 'security', delta: number) => void;
+  onDivineAidTopFamily?: () => void;
 }
 
 type WorldTab = 'env' | 'map' | 'laws' | 'divine' | 'audit';
@@ -212,6 +219,13 @@ export function WorldControlsPanel({
   onDivineAdjustTax,
   onDivineForceSeason,
   onDivineGrantKnowledge,
+  qualityOfLife = 70,
+  activeCrisesCount = 0,
+  onDivineAccelerateDiscovery,
+  onDivineSparkFestival,
+  onDivineMitigateCrises,
+  onDivineAdjustSociety,
+  onDivineAidTopFamily,
 }: WorldControlsPanelProps) {
   const [activeTab, setActiveTab] = useState<WorldTab>('env');
   const [openEnv, setOpenEnv] = useState(true);
@@ -331,6 +345,18 @@ export function WorldControlsPanel({
                     }`}
                   >
                     {Math.round(ecosystemHealth)}%
+                  </span>
+                </div>
+                <div className="flex justify-between gap-2 text-slate-300">
+                  <span>Calidad de Vida / Crisis</span>
+                  <span className="font-semibold" data-testid="env-qol-crises">
+                    <span className={qualityOfLife >= 60 ? 'text-emerald-400' : 'text-amber-300'}>
+                      {Math.round(qualityOfLife)}%
+                    </span>
+                    {' · '}
+                    <span className={activeCrisesCount > 0 ? 'text-rose-400' : 'text-slate-400'}>
+                      {activeCrisesCount} crisis
+                    </span>
                   </span>
                 </div>
                 {(firesCount > 0 || activeDisaster) && (
@@ -915,6 +941,89 @@ export function WorldControlsPanel({
                     ))}
                   </div>
                 </div>
+
+                {(onDivineAccelerateDiscovery ||
+                  onDivineSparkFestival ||
+                  onDivineMitigateCrises ||
+                  onDivineAdjustSociety ||
+                  onDivineAidTopFamily) && (
+                  <div className="bg-[#0b1120] border border-emerald-800/40 rounded-lg p-3 flex flex-col gap-2">
+                    <div className="flex items-center justify-between gap-2 text-[13px]">
+                      <span className="font-semibold text-emerald-300">Impulsos de Civilización</span>
+                      <span className="text-[11px] text-slate-400">
+                        {isObserver ? 'Solo lectura' : 'Intervención activa'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {onDivineAccelerateDiscovery && (
+                        <button
+                          type="button"
+                          disabled={isObserver}
+                          onClick={onDivineAccelerateDiscovery}
+                          data-testid="divine-discovery-btn"
+                          className="py-1.5 px-2 rounded-md bg-[#111827] border border-slate-800 hover:border-emerald-500 disabled:opacity-40 text-[12px] text-emerald-200 text-left"
+                        >
+                          Acelerar Descubr.
+                        </button>
+                      )}
+                      {onDivineSparkFestival && (
+                        <button
+                          type="button"
+                          disabled={isObserver}
+                          onClick={onDivineSparkFestival}
+                          data-testid="divine-festival-btn"
+                          className="py-1.5 px-2 rounded-md bg-[#111827] border border-slate-800 hover:border-fuchsia-500 disabled:opacity-40 text-[12px] text-fuchsia-200 text-left"
+                        >
+                          Impulsar Festival
+                        </button>
+                      )}
+                      {onDivineMitigateCrises && (
+                        <button
+                          type="button"
+                          disabled={isObserver}
+                          onClick={onDivineMitigateCrises}
+                          data-testid="divine-mitigate-btn"
+                          className="py-1.5 px-2 rounded-md bg-[#111827] border border-slate-800 hover:border-sky-500 disabled:opacity-40 text-[12px] text-sky-200 text-left"
+                        >
+                          Mitigar Crisis
+                        </button>
+                      )}
+                      {onDivineAidTopFamily && (
+                        <button
+                          type="button"
+                          disabled={isObserver}
+                          onClick={onDivineAidTopFamily}
+                          data-testid="divine-aid-family-btn"
+                          className="py-1.5 px-2 rounded-md bg-[#111827] border border-slate-800 hover:border-amber-500 disabled:opacity-40 text-[12px] text-amber-200 text-left"
+                        >
+                          Bendecir Linaje
+                        </button>
+                      )}
+                      {onDivineAdjustSociety && (
+                        <>
+                          <button
+                            type="button"
+                            disabled={isObserver}
+                            onClick={() => onDivineAdjustSociety('happiness', 12)}
+                            data-testid="divine-happiness-btn"
+                            className="py-1.5 px-2 rounded-md bg-[#111827] border border-slate-800 hover:border-emerald-500 disabled:opacity-40 text-[12px] text-slate-200 text-left"
+                          >
+                            +Bienestar
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isObserver}
+                            onClick={() => onDivineAdjustSociety('trust', 12)}
+                            data-testid="divine-trust-btn"
+                            className="py-1.5 px-2 rounded-md bg-[#111827] border border-slate-800 hover:border-sky-500 disabled:opacity-40 text-[12px] text-slate-200 text-left"
+                          >
+                            +Confianza
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </section>

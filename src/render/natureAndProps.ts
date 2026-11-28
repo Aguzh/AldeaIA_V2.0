@@ -13,6 +13,33 @@ import type {
   ResourceNode,
   SimulationState,
 } from '../types/simulation';
+import { drawSpriteFrame, getCutoutSprite } from './spriteLoader';
+
+const FOREST_GROVE_RECT = { sx: 623, sy: 24, sw: 565, sh: 417 };
+
+const MOUNTAIN_RECTS = [
+  { sx: 616, sy: 460, sw: 276, sh: 215 },
+  { sx: 899, sy: 476, sw: 284, sh: 197 },
+  { sx: 616, sy: 679, sw: 180, sh: 210 },
+  { sx: 795, sy: 675, sw: 105, sh: 149 },
+  { sx: 906, sy: 679, sw: 272, sh: 217 },
+] as const;
+
+const RESOURCE_SPRITES = {
+  logPile: { sx: 36, sy: 363, sw: 149, sh: 139 },
+  logSingle: { sx: 261, sy: 373, sw: 123, sh: 124 },
+  stoneSmall: { sx: 496, sy: 409, sw: 93, sh: 73 },
+  stoneLarge: { sx: 670, sy: 373, sw: 129, sh: 119 },
+  copper: { sx: 46, sy: 537, sw: 128, sh: 124 },
+  iron: { sx: 266, sy: 537, sw: 129, sh: 124 },
+  silver: { sx: 491, sy: 537, sw: 129, sh: 124 },
+  gold: { sx: 849, sy: 537, sw: 129, sh: 124 },
+  berries: { sx: 46, sy: 696, sw: 129, sh: 129 },
+  apple: { sx: 860, sy: 701, sw: 108, sh: 124 },
+  campfire: { sx: 56, sy: 859, sw: 108, sh: 135 },
+  sparks: { sx: 286, sy: 906, sw: 52, sh: 57 },
+  flame: { sx: 450, sy: 838, sw: 125, sh: 162 },
+} as const;
 
 export function getSunShadowOffset(
   minute: number,
@@ -61,23 +88,19 @@ function drawRoundedTree16Bit(
   const sx = ox + Math.round(shadow.dx * 0.75);
   const sy = oy + 10 + Math.min(4, shadow.dy);
 
-  // Sombra proyectada en el suelo (por capas pixeladas)
   ctx.fillStyle = `rgba(15, 23, 42, ${(shadow.alpha * 0.65).toFixed(2)})`;
   ctx.fillRect(sx - 12, sy - 1, 24, 5);
   ctx.fillStyle = `rgba(15, 23, 42, ${shadow.alpha.toFixed(2)})`;
   ctx.fillRect(sx - 9, sy, 18, 4);
 
-  // Tronco con contorno y raíces
   ctx.fillStyle = '#2e1406';
   ctx.fillRect(ox - 4, oy + 2, 8, 12);
   ctx.fillRect(ox - 6, oy + 12, 12, 3);
   ctx.fillStyle = '#6b3e1b';
   ctx.fillRect(ox - 3, oy + 2, 6, 11);
   ctx.fillRect(ox - 5, oy + 12, 10, 2);
-  // Luz izquierda del tronco
   ctx.fillStyle = '#925729';
   ctx.fillRect(ox - 3, oy + 2, 2, 10);
-  // Sombra derecha del tronco
   ctx.fillStyle = '#45220c';
   ctx.fillRect(ox + 1, oy + 2, 2, 11);
 
@@ -89,25 +112,21 @@ function drawRoundedTree16Bit(
   const highlight = isWinter ? '#94a3b8' : isAutumn ? '#f59e0b' : '#4ade80';
   const tip = isWinter ? '#cbd5e1' : isAutumn ? '#fcd34d' : '#86efac';
 
-  // Contorno oscuro del follaje
   ctx.fillStyle = outline;
   ctx.fillRect(cBase - 13, oy - 8, 26, 13);
   ctx.fillRect(cBase - 11, oy - 15, 22, 18);
   ctx.fillRect(cBase - 7, oy - 20, 14, 7);
 
-  // Capa base oscura (sombra inferior de la copa)
   ctx.fillStyle = deep;
   ctx.fillRect(cBase - 12, oy - 7, 24, 11);
   ctx.fillRect(cBase - 10, oy - 14, 20, 16);
   ctx.fillRect(cBase - 6, oy - 19, 12, 7);
 
-  // Masa media frondosa
   ctx.fillStyle = mid;
   ctx.fillRect(cBase - 11, oy - 8, 20, 9);
   ctx.fillRect(cBase - 9, oy - 14, 17, 12);
   ctx.fillRect(cBase - 5, oy - 18, 10, 6);
 
-  // Clusters iluminados arriba a la izquierda
   ctx.fillStyle = bright;
   ctx.fillRect(cBase - 10, oy - 10, 11, 7);
   ctx.fillRect(cBase - 7, oy - 16, 12, 7);
@@ -118,7 +137,6 @@ function drawRoundedTree16Bit(
   ctx.fillRect(cBase - 9, oy - 9, 6, 4);
   ctx.fillRect(cBase - 4, oy - 18, 6, 3);
 
-  // Puntos de hojas brillantes
   ctx.fillStyle = tip;
   ctx.fillRect(cBase - 7, oy - 15, 3, 2);
   ctx.fillRect(cBase - 3, oy - 18, 3, 2);
@@ -152,11 +170,9 @@ function drawPineTree16Bit(
   const sx = ox + Math.round(shadow.dx * 0.75);
   const sy = oy + 11 + Math.min(4, shadow.dy);
 
-  // Sombra
   ctx.fillStyle = `rgba(15, 23, 42, ${shadow.alpha.toFixed(2)})`;
   ctx.fillRect(sx - 9, sy, 18, 4);
 
-  // Tronco
   ctx.fillStyle = '#2e1406';
   ctx.fillRect(ox - 3, oy + 4, 6, 11);
   ctx.fillStyle = '#6b3e1b';
@@ -171,7 +187,6 @@ function drawPineTree16Bit(
   const bright = isWinter ? '#64748b' : isAutumn ? '#d97706' : '#10b981';
   const tip = isWinter ? '#e2e8f0' : isAutumn ? '#fbbf24' : '#6ee7b7';
 
-  // Tres niveles de pino con contorno
   const tiers = [
     { w: 22, y: oy - 3, h: 9 },
     { w: 16, y: oy - 11, h: 9 },
@@ -194,7 +209,6 @@ function drawPineTree16Bit(
     ctx.fillRect(tx - Math.round(half * 0.5), t.y + 1, 2, 2);
   }
 
-  // Punta superior
   ctx.fillStyle = outline;
   ctx.fillRect(cBase - 3, oy - 23, 6, 4);
   ctx.fillStyle = bright;
@@ -214,27 +228,108 @@ export function drawForestAndMountains(
   animPhase: number,
   shadow: { dx: number; dy: number; alpha: number }
 ): void {
+  ctx.imageSmoothingEnabled = false;
   const isWinter = season === 'Invierno';
   const isAutumn = season === 'Otoño';
 
-  for (let ty = 34; ty < CANVAS_HEIGHT - 28; ty += 56) {
-    if (ty > RIVER_TOP_Y - 22 && ty < RIVER_BOTTOM_Y + 26) continue;
-    for (let tx = 26; tx < FOREST_MAX_X - 24; tx += 58) {
-      const ox = Math.round(tx + ((ty * 7) % 21));
-      const oy = Math.round(ty + ((tx * 3) % 15));
-      const sway = Math.round(Math.sin(animPhase * 1.4 + ox * 0.09 + oy * 0.05) * 1.4);
-      const seed = ox + oy;
-      if (seed % 3 === 0) {
-        drawPineTree16Bit(ctx, ox, oy, sway, season, shadow);
-      } else {
-        drawRoundedTree16Bit(ctx, ox, oy, sway, season, shadow, seed);
+  const groveSprite = getCutoutSprite(
+    'forest',
+    FOREST_GROVE_RECT.sx,
+    FOREST_GROVE_RECT.sy,
+    FOREST_GROVE_RECT.sw,
+    FOREST_GROVE_RECT.sh,
+    { mode: 'flood', tolerance: 34 }
+  );
+
+  // 1. BOSQUE DENSO Y CONTINUO (franja izquierda 0..FOREST_MAX_X, Zona Norte y Zona Sur)
+  const renderForestBand = (bandTop: number, bandBottom: number, bandOffset: number) => {
+    if (bandBottom <= bandTop + 20) return;
+
+    // Sombra profunda bajo el dosel y matorrales pixel-art en bordes
+    ctx.fillStyle = isWinter
+      ? 'rgba(15, 38, 36, 0.24)'
+      : isAutumn
+        ? 'rgba(69, 39, 12, 0.20)'
+        : 'rgba(6, 40, 18, 0.24)';
+    ctx.fillRect(0, bandTop, FOREST_MAX_X - 24, bandBottom - bandTop);
+
+    if (groveSprite) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, bandTop, FOREST_MAX_X + 34, bandBottom - bandTop);
+      ctx.clip();
+
+      const colXs = [-24, 74, 168];
+      const rowStep = 74;
+      let rowIdx = 0;
+      for (let gy = bandTop - 10; gy < bandBottom - 16; gy += rowStep) {
+        const stagger = (rowIdx % 2) * 14;
+        for (let colIdx = 0; colIdx < colXs.length; colIdx++) {
+          const seed = rowIdx * 17 + colIdx * 31 + bandOffset;
+          const dw = 160 + (seed % 16);
+          const dh = 112 + ((seed * 3) % 14);
+          const edgeVariance = colIdx === 2 ? ((seed % 25) - 14) : ((seed % 9) - 4);
+          const gx = Math.round(colXs[colIdx] + stagger + edgeVariance);
+          const sway = Math.round(Math.sin(animPhase * 1.1 + seed * 0.7) * 1);
+          const flip = (rowIdx + colIdx) % 2 === 1;
+          drawSpriteFrame(ctx, groveSprite, gx + sway, Math.round(gy), dw, dh, flip);
+          if (isWinter) {
+            ctx.fillStyle = 'rgba(241, 245, 249, 0.34)';
+            ctx.fillRect(Math.max(0, gx + 18), Math.max(bandTop, Math.round(gy) + 14), Math.min(dw - 36, 110), 8);
+          }
+        }
+        rowIdx++;
+      }
+      ctx.restore();
+    } else {
+      // Fallback procedural continuo sin huecos pelados
+      let rowIdx = 0;
+      for (let ty = bandTop + 16; ty < bandBottom - 12; ty += 34) {
+        const stagger = (rowIdx % 2) * 18;
+        for (let tx = 14 + stagger; tx < FOREST_MAX_X - 6; tx += 36) {
+          const seed = tx * 7 + ty * 13 + bandOffset;
+          const ox = Math.round(tx + ((seed % 9) - 4));
+          const oy = Math.round(ty + (((seed * 3) % 7) - 3));
+          const sway = Math.round(Math.sin(animPhase * 1.4 + ox * 0.09 + oy * 0.05) * 1.2);
+          if (seed % 3 === 0) {
+            drawPineTree16Bit(ctx, ox, oy, sway, season, shadow);
+          } else {
+            drawRoundedTree16Bit(ctx, ox, oy, sway, season, shadow, seed);
+          }
+        }
+        rowIdx++;
       }
     }
-  }
+
+    // Arbustos, raíces musgosas y helechos de transición en el lindero irregular del bosque
+    for (let by = bandTop + 10; by < bandBottom - 14; by += 18) {
+      const seed = by * 11 + bandOffset;
+      const bx = Math.round(FOREST_MAX_X - 8 + ((seed % 32) - 12));
+      const darkBush = isWinter ? '#334155' : isAutumn ? '#9a3412' : '#14532d';
+      const lightBush = isWinter ? '#94a3b8' : isAutumn ? '#ea580c' : '#22c55e';
+      // Raíces o ramitas del suelo
+      ctx.fillStyle = '#5c3a21';
+      ctx.fillRect(bx - 9, by + 2, 5, 2);
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.24)';
+      ctx.fillRect(bx - 5, by + 4, 11, 3);
+      ctx.fillStyle = darkBush;
+      ctx.fillRect(bx - 5, by - 2, 11, 7);
+      ctx.fillStyle = lightBush;
+      ctx.fillRect(bx - 3, by - 3, 7, 5);
+      if (seed % 2 === 0 && !isWinter) {
+        // Hojarasca / brote cercano saltando al pasto
+        ctx.fillStyle = isAutumn ? '#f59e0b' : '#4ade80';
+        ctx.fillRect(bx + 8, by + 3, 3, 2);
+      }
+    }
+  };
+
+  renderForestBand(12, RIVER_TOP_Y - 12, 3);
+  renderForestBand(RIVER_BOTTOM_Y + 12, CANVAS_HEIGHT - 12, 19);
 
   // Hojas cayendo suavemente en Otoño dentro del bosque
   if (isAutumn) {
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 18; i++) {
       const lx = Math.round(((i * 37 + Math.floor(animPhase * 12)) % (FOREST_MAX_X - 18)) + 8);
       const ly = Math.round(((i * 59 + Math.floor(animPhase * 22)) % (CANVAS_HEIGHT - 20)) + 10);
       ctx.fillStyle = i % 2 === 0 ? '#f59e0b' : '#ea580c';
@@ -242,83 +337,153 @@ export function drawForestAndMountains(
     }
   }
 
-  // Montañas facetadas 16-bit con luces, sombras y nieves
-  for (let my = 48; my < CANVAS_HEIGHT - 36; my += 84) {
-    if (my > RIVER_TOP_Y - 24 && my < RIVER_BOTTOM_Y + 34) continue;
-    for (let mx = MOUNTAIN_MIN_X + 34; mx < CANVAS_WIDTH - 24; mx += 78) {
-      const ox = Math.round(mx + ((my * 5) % 19));
-      const oy = Math.round(my + ((mx * 3) % 15));
+  // 2. CORDILLERA MONTAÑOSA CONTINUA (franja derecha MOUNTAIN_MIN_X..CANVAS_WIDTH)
+  const mountainSprites = MOUNTAIN_RECTS.map((r) =>
+    getCutoutSprite('forest', r.sx, r.sy, r.sw, r.sh, { mode: 'flood', tolerance: 34 })
+  );
+  const allMountainsReady = mountainSprites.every((s): s is HTMLCanvasElement => Boolean(s));
 
-      // Sombra proyectada en la base
-      ctx.fillStyle = `rgba(15, 23, 42, ${(shadow.alpha + 0.1).toFixed(2)})`;
-      ctx.fillRect(ox - 24 + Math.round(shadow.dx * 0.65), oy + 14 + Math.min(4, shadow.dy), 48, 6);
+  const renderMountainBand = (bandTop: number, bandBottom: number, bandSeed: number) => {
+    if (bandBottom <= bandTop + 24) return;
 
-      // Contorno oscuro de la montaña
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(ox - 24, oy - 1, 48, 18);
-      ctx.fillRect(ox - 18, oy - 13, 36, 14);
-      ctx.fillRect(ox - 12, oy - 23, 24, 12);
-      ctx.fillRect(ox - 7, oy - 29, 14, 8);
+    if (allMountainsReady) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(MOUNTAIN_MIN_X - 32, bandTop, CANVAS_WIDTH - MOUNTAIN_MIN_X + 36, bandBottom - bandTop);
+      ctx.clip();
 
-      // Lado derecho en sombra profunda
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(ox - 22, oy, 44, 16);
-      ctx.fillRect(ox - 16, oy - 12, 32, 14);
-      ctx.fillRect(ox - 10, oy - 22, 20, 12);
-      ctx.fillRect(ox - 6, oy - 27, 12, 7);
+      // Capa base: cordillera y acantilados continuos entrelazados
+      let rowIdx = 0;
+      for (let my = bandTop + 42; my < bandBottom + 16; my += 56) {
+        const stagger = (rowIdx % 2) * 34;
+        for (let mx = MOUNTAIN_MIN_X + 38 - stagger; mx < CANVAS_WIDTH + 34; mx += 82) {
+          const seed = rowIdx * 23 + Math.round(mx) + bandSeed;
+          const ridgePick = seed % 3 === 0 ? 4 : 1; // 1 = muralla nevada ancha, 4 = meseta rocosa escalonada
+          const rect = MOUNTAIN_RECTS[ridgePick];
+          const dh = 76 + (seed % 14);
+          const dw = Math.round((rect.sw / rect.sh) * dh);
+          const ox = Math.round(mx + ((seed % 13) - 6));
+          const oy = Math.round(my + (((seed * 3) % 9) - 4));
+          ctx.fillStyle = `rgba(15, 23, 42, ${(shadow.alpha + 0.1).toFixed(2)})`;
+          ctx.fillRect(Math.round(ox - dw * 0.44 + shadow.dx * 0.4), oy - 4, Math.round(dw * 0.88), 8);
+          drawSpriteFrame(ctx, mountainSprites[ridgePick], Math.round(ox - dw / 2), Math.round(oy - dh), dw, dh);
+        }
 
-      // Plano medio rocoso
-      ctx.fillStyle = '#475569';
-      ctx.fillRect(ox - 22, oy, 30, 15);
-      ctx.fillRect(ox - 16, oy - 12, 22, 13);
-      ctx.fillRect(ox - 10, oy - 22, 13, 11);
+        // Estribaciones rocosas irregulares en la falda oeste (rompe el borde recto)
+        const foothillSeed = rowIdx * 29 + bandSeed;
+        const fPick = foothillSeed % 2 === 0 ? 3 : 4;
+        const fRect = MOUNTAIN_RECTS[fPick];
+        const fH = 50 + (foothillSeed % 14);
+        const fW = Math.round((fRect.sw / fRect.sh) * fH);
+        const fx = Math.round(MOUNTAIN_MIN_X + 10 + ((foothillSeed % 21) - 10));
+        const fy = Math.round(my + 4 + ((foothillSeed * 3) % 11) - 5);
+        ctx.fillStyle = `rgba(15, 23, 42, ${(shadow.alpha + 0.08).toFixed(2)})`;
+        ctx.fillRect(Math.round(fx - fW * 0.42), fy - 3, Math.round(fW * 0.84), 6);
+        drawSpriteFrame(ctx, mountainSprites[fPick], Math.round(fx - fW / 2), Math.round(fy - fH), fW, fH);
 
-      // Faceta iluminada izquierda
-      ctx.fillStyle = '#64748b';
-      ctx.fillRect(ox - 21, oy + 1, 16, 13);
-      ctx.fillRect(ox - 15, oy - 11, 13, 12);
-      ctx.fillRect(ox - 9, oy - 21, 8, 10);
+        // Capa frontal: picos escarpados y agujas nevadas sobre la cordillera
+        for (let px = MOUNTAIN_MIN_X + 58 + (rowIdx % 2) * 26; px < CANVAS_WIDTH + 12; px += 78) {
+          const seed = rowIdx * 41 + Math.round(px) + bandSeed;
+          const peakOptions = isWinter ? [2, 1, 2, 0] : [0, 2, 0, 3];
+          const pickIdx = peakOptions[seed % peakOptions.length];
+          const rect = MOUNTAIN_RECTS[pickIdx];
+          const dh = pickIdx === 3 ? 62 : 70 + (seed % 18);
+          const dw = Math.round((rect.sw / rect.sh) * dh);
+          const ox = Math.round(px + ((seed % 9) - 4));
+          const oy = Math.round(my + 8 + (((seed * 5) % 9) - 4));
+          drawSpriteFrame(ctx, mountainSprites[pickIdx], Math.round(ox - dw / 2), Math.round(oy - dh), dw, dh);
+        }
+        rowIdx++;
+      }
 
-      // Arista luminosa
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(ox - 19, oy + 2, 4, 8);
-      ctx.fillRect(ox - 13, oy - 10, 4, 9);
-      ctx.fillRect(ox - 7, oy - 20, 4, 9);
-
-      // Grietas y detalles de estratos
+      ctx.restore();
+    } else {
+      // Fallback procedural continuo: muralla rocosa + picos encadenados
       ctx.fillStyle = '#1e293b';
-      ctx.fillRect(ox + 2, oy + 4, 8, 2);
-      ctx.fillRect(ox + 5, oy - 6, 6, 2);
-      ctx.fillRect(ox - 6, oy + 8, 7, 2);
+      ctx.fillRect(MOUNTAIN_MIN_X + 12, bandTop, CANVAS_WIDTH - MOUNTAIN_MIN_X - 12, bandBottom - bandTop);
+      let rowIdx = 0;
+      for (let my = bandTop + 34; my < bandBottom - 10; my += 52) {
+        const stagger = (rowIdx % 2) * 24;
+        for (let mx = MOUNTAIN_MIN_X + 26 + stagger; mx < CANVAS_WIDTH - 10; mx += 54) {
+          const seed = mx + my + bandSeed;
+          const ox = Math.round(mx + ((seed % 9) - 4));
+          const oy = Math.round(my + (((seed * 3) % 7) - 3));
 
-      // Casquete nevado en la cumbre
-      ctx.fillStyle = isWinter ? '#e2e8f0' : '#cbd5e1';
-      ctx.fillRect(ox - 6, oy - 27, 12, 7);
-      ctx.fillRect(ox - 9, oy - 21, 18, 4);
-      ctx.fillStyle = '#f8fafc';
-      ctx.fillRect(ox - 6, oy - 27, 7, 5);
-      ctx.fillRect(ox - 9, oy - 21, 9, 3);
-      if (isWinter) {
-        ctx.fillRect(ox - 14, oy - 12, 8, 2);
+          ctx.fillStyle = `rgba(15, 23, 42, ${(shadow.alpha + 0.1).toFixed(2)})`;
+          ctx.fillRect(ox - 26 + Math.round(shadow.dx * 0.65), oy + 12 + Math.min(4, shadow.dy), 52, 7);
+
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(ox - 28, oy - 4, 56, 20);
+          ctx.fillRect(ox - 20, oy - 16, 40, 14);
+          ctx.fillRect(ox - 13, oy - 26, 26, 12);
+          ctx.fillRect(ox - 7, oy - 32, 14, 8);
+
+          ctx.fillStyle = '#334155';
+          ctx.fillRect(ox - 26, oy - 2, 52, 17);
+          ctx.fillRect(ox - 18, oy - 15, 36, 14);
+          ctx.fillRect(ox - 11, oy - 25, 22, 12);
+          ctx.fillRect(ox - 6, oy - 30, 12, 7);
+
+          ctx.fillStyle = '#475569';
+          ctx.fillRect(ox - 25, oy - 2, 34, 15);
+          ctx.fillRect(ox - 18, oy - 15, 24, 13);
+          ctx.fillRect(ox - 11, oy - 25, 14, 11);
+
+          ctx.fillStyle = '#64748b';
+          ctx.fillRect(ox - 22, oy, 18, 12);
+          ctx.fillRect(ox - 15, oy - 13, 13, 11);
+          ctx.fillRect(ox - 9, oy - 23, 8, 9);
+
+          ctx.fillStyle = isWinter ? '#e2e8f0' : '#cbd5e1';
+          ctx.fillRect(ox - 6, oy - 30, 12, 7);
+          ctx.fillRect(ox - 9, oy - 24, 18, 4);
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(ox - 6, oy - 30, 7, 5);
+          ctx.fillRect(ox - 9, oy - 24, 9, 3);
+        }
+        rowIdx++;
       }
     }
-  }
 
-  // Carteles 16-bit de bioma en esquinas superiores
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.84)';
-  ctx.fillRect(10, 8, 128, 16);
-  ctx.fillRect(CANVAS_WIDTH - 152, 8, 142, 16);
-  ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+    // Peñascos, gravilla y piedras de transición en la base oeste de la cordillera
+    for (let ry = bandTop + 12; ry < bandBottom - 12; ry += 20) {
+      const seed = ry * 13 + bandSeed;
+      const rx = Math.round(MOUNTAIN_MIN_X - 8 + ((seed % 22) - 10));
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.24)';
+      ctx.fillRect(rx - 7, ry + 4, 14, 3);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(rx - 7, ry - 3, 13, 8);
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(rx - 6, ry - 2, 10, 5);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(rx - 5, ry - 2, 5, 3);
+      if (seed % 2 === 0) {
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(rx - 14 - (seed % 6), ry + 1, 5, 3);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(rx - 14 - (seed % 6), ry + 1, 3, 1);
+      }
+    }
+  };
+
+  renderMountainBand(8, RIVER_TOP_Y - 12, 7);
+  renderMountainBand(RIVER_BOTTOM_Y + 12, CANVAS_HEIGHT - 8, 29);
+
+  // Carteles discretos de bioma en esquinas superiores
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.62)';
+  ctx.fillRect(10, 8, 98, 13);
+  ctx.fillRect(CANVAS_WIDTH - 124, 8, 114, 13);
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.24)';
   ctx.lineWidth = 1;
-  ctx.strokeRect(10, 8, 128, 16);
-  ctx.strokeRect(CANVAS_WIDTH - 152, 8, 142, 16);
-  ctx.fillStyle = '#86efac';
-  ctx.font = 'bold 9px monospace';
+  ctx.strokeRect(10, 8, 98, 13);
+  ctx.strokeRect(CANVAS_WIDTH - 124, 8, 114, 13);
+  ctx.fillStyle = 'rgba(134, 239, 172, 0.9)';
+  ctx.font = 'bold 8px monospace';
   ctx.textAlign = 'left';
-  ctx.fillText('BOSQUE (Maderas)', 16, 19);
-  ctx.fillStyle = '#fcd34d';
+  ctx.fillText('BOSQUE · Madera', 15, 17);
+  ctx.fillStyle = 'rgba(252, 211, 77, 0.9)';
   ctx.textAlign = 'right';
-  ctx.fillText('MONTAÑAS (Minerales)', CANVAS_WIDTH - 16, 19);
+  ctx.fillText('MONTAÑAS · Menas', CANVAS_WIDTH - 15, 17);
 }
 
 export function drawResourceNodes(
@@ -326,6 +491,7 @@ export function drawResourceNodes(
   resources: ResourceNode[],
   animPhase: number
 ): void {
+  ctx.imageSmoothingEnabled = false;
   const glintTick = Math.floor(animPhase * 2.5);
   for (const r of resources) {
     const rx = Math.round(r.x);
@@ -338,17 +504,62 @@ export function drawResourceNodes(
       continue;
     }
 
+    let spriteRect: { sx: number; sy: number; sw: number; sh: number } | null = null;
+    let drawSize = 18;
+    if (r.type === 'food') {
+      spriteRect = r.id % 2 === 0 ? RESOURCE_SPRITES.apple : RESOURCE_SPRITES.berries;
+      drawSize = 16;
+    } else if (r.type === 'wood' || r.type === 'oak_wood') {
+      spriteRect = RESOURCE_SPRITES.logPile;
+      drawSize = 20;
+    } else if (r.type === 'pine_wood' || r.type === 'maple_wood') {
+      spriteRect = RESOURCE_SPRITES.logSingle;
+      drawSize = 18;
+    } else if (r.type === 'stone') {
+      spriteRect = r.id % 2 === 0 ? RESOURCE_SPRITES.stoneLarge : RESOURCE_SPRITES.stoneSmall;
+      drawSize = 18;
+    } else if (r.type === 'copper') {
+      spriteRect = RESOURCE_SPRITES.copper;
+    } else if (r.type === 'iron') {
+      spriteRect = RESOURCE_SPRITES.iron;
+    } else if (r.type === 'silver') {
+      spriteRect = RESOURCE_SPRITES.silver;
+    } else if (r.type === 'gold') {
+      spriteRect = RESOURCE_SPRITES.gold;
+    }
+
+    const sprite = spriteRect
+      ? getCutoutSprite('wildlife', spriteRect.sx, spriteRect.sy, spriteRect.sw, spriteRect.sh, {
+          mode: 'flood',
+          tolerance: 36,
+        })
+      : null;
+
+    if (sprite && spriteRect) {
+      const dh = drawSize;
+      const dw = Math.round((spriteRect.sw / spriteRect.sh) * dh);
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.32)';
+      ctx.fillRect(Math.round(rx - dw * 0.4), ry + 4, Math.round(dw * 0.8), 3);
+      drawSpriteFrame(ctx, sprite, Math.round(rx - dw / 2), Math.round(ry + 6 - dh), dw, dh);
+
+      if ((r.type === 'silver' || r.type === 'gold') && (glintTick + r.id) % 4 === 0) {
+        ctx.fillStyle = r.type === 'gold' ? '#fef9c3' : '#ffffff';
+        ctx.fillRect(rx + 2, ry - 9, 3, 1);
+        ctx.fillRect(rx + 3, ry - 10, 1, 3);
+      }
+      continue;
+    }
+
+    // Fallback procedural 16-bit
     if (r.type === 'food') {
       ctx.fillStyle = 'rgba(15, 23, 42, 0.34)';
       ctx.fillRect(rx - 6, ry + 5, 12, 3);
-      // Tallo y hoja
       ctx.fillStyle = '#451a03';
       ctx.fillRect(rx - 1, ry - 8, 2, 4);
       ctx.fillStyle = '#15803d';
       ctx.fillRect(rx + 1, ry - 8, 5, 3);
       ctx.fillStyle = '#4ade80';
       ctx.fillRect(rx + 2, ry - 8, 3, 1);
-      // Manzana / fruto silvestre con contorno
       ctx.fillStyle = '#450a0a';
       ctx.fillRect(rx - 6, ry - 5, 12, 10);
       ctx.fillRect(rx - 4, ry - 6, 8, 12);
@@ -393,7 +604,6 @@ export function drawResourceNodes(
 
       ctx.fillStyle = 'rgba(15, 23, 42, 0.34)';
       ctx.fillRect(rx - 8, ry + 4, 16, 3);
-      // Contorno oscuro del tronco apilado
       ctx.fillStyle = '#1c1108';
       ctx.fillRect(rx - 8, ry - 4, 17, 9);
       ctx.fillStyle = bark;
@@ -401,7 +611,6 @@ export function drawResourceNodes(
       ctx.fillStyle = barkLight;
       ctx.fillRect(rx - 7, ry - 3, 11, 2);
       ctx.fillRect(rx - 5, ry + 1, 8, 1);
-      // Corte con anillos
       ctx.fillStyle = core;
       ctx.fillRect(rx + 4, ry - 3, 4, 7);
       ctx.fillStyle = '#92400e';
@@ -472,14 +681,41 @@ export function drawFires(
   fires: FireHazard[],
   minute: number
 ): void {
+  ctx.imageSmoothingEnabled = false;
   const flicker = Math.floor(minute * 0.8) % 2;
+  const flameSprite = getCutoutSprite(
+    'wildlife',
+    RESOURCE_SPRITES.flame.sx,
+    RESOURCE_SPRITES.flame.sy,
+    RESOURCE_SPRITES.flame.sw,
+    RESOURCE_SPRITES.flame.sh,
+    { mode: 'flood', tolerance: 36 }
+  );
+  const campfireSprite = getCutoutSprite(
+    'wildlife',
+    RESOURCE_SPRITES.campfire.sx,
+    RESOURCE_SPRITES.campfire.sy,
+    RESOURCE_SPRITES.campfire.sw,
+    RESOURCE_SPRITES.campfire.sh,
+    { mode: 'flood', tolerance: 36 }
+  );
+
   for (const fire of fires) {
     const fx = Math.round(fire.x);
     const fy = Math.round(fire.y);
-    // Brasas y leños
+
+    if (flameSprite || campfireSprite) {
+      const sprite = fire.intensity >= 1.2 && flameSprite ? flameSprite : campfireSprite ?? flameSprite!;
+      const dw = fire.intensity >= 1.2 ? 22 : 20;
+      const dh = fire.intensity >= 1.2 ? 26 : 24;
+      drawSpriteFrame(ctx, sprite, Math.round(fx - dw / 2), Math.round(fy + 6 - dh), dw, dh, flicker === 1);
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(fx - 3 + flicker * 5, fy - 18 - flicker * 2, 2, 2);
+      continue;
+    }
+
     ctx.fillStyle = '#292524';
     ctx.fillRect(fx - 9, fy + 3, 18, 4);
-    // Llamas en capas nítidas
     ctx.fillStyle = '#b91c1c';
     ctx.fillRect(fx - 8, fy - 4, 16, 9);
     ctx.fillStyle = '#dc2626';
@@ -490,7 +726,6 @@ export function drawFires(
     ctx.fillRect(fx - 3, fy - 12 + flicker * 2, 6, 8);
     ctx.fillStyle = '#fef9c3';
     ctx.fillRect(fx - 1, fy - 8 + flicker, 2, 4);
-    // Chispas ascendentes
     ctx.fillStyle = '#fde047';
     ctx.fillRect(fx - 4 + flicker * 6, fy - 15 - flicker * 2, 2, 2);
   }
@@ -544,7 +779,6 @@ export function drawAtmosphericLighting(
   isNight: boolean,
   occupiedHouseIds: Set<number>
 ): void {
-  // Iluminación nocturna cálida con halos radiales o tinte de amanecer/atardecer
   if (isNight) {
     ctx.fillStyle = 'rgba(8, 15, 36, 0.36)';
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);

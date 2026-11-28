@@ -5,6 +5,7 @@ import type {
   AnimalType,
   BankLoan,
   BiomeType,
+  BridgeStructure,
   BuildingOccupantBadge,
   ConstructionOperationType,
   DaySnapshot,
@@ -26,6 +27,7 @@ import type {
   QwenPolicyState,
   ResourceCostMap,
   ResourceInventory,
+  ResourceNode,
   ResourceOperationRecord,
   RoadTile,
   RoadType,
@@ -36,12 +38,14 @@ import type {
   SpecialBuilding,
   SpecialBuildingType,
   TaskType,
+  TradeGoodKey,
   VillageLaw,
   VillageLawId,
   VillagePetition,
   WeatherType,
   WoodGrade,
 } from '../types/simulation';
+import { dispatchQwenActionExtension, emitSimEvent } from './eventBus';
 import {
   applyGenerationAptitude,
   applyRetirementAndAgingModifiers,
@@ -158,7 +162,7 @@ export const NIGHT_START_MINUTE = 1200;
 export const DAY_GAME_MINUTES = NIGHT_START_MINUTE - DAY_START_MINUTE; // 840
 export const NIGHT_GAME_MINUTES = 1440 - DAY_GAME_MINUTES; // 600
 
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 
 // Calendario: 30 días por estación, 120 días por año completo
 export const DAYS_PER_SEASON = 30;
@@ -694,6 +698,10 @@ export function toggleVillageLaw(
     'politics',
     `${nextActive ? 'Ley promulgada' : 'Ley derogada'}: ${law.name} (${proposer}).`
   );
+  emitSimEvent(state, 'law_changed', `${law.name}: ${nextActive ? 'activa' : 'derogada'}`, undefined, {
+    lawId: law.id,
+    active: nextActive,
+  });
   return law;
 }
 
@@ -3823,6 +3831,9 @@ export function advanceDayAging(
         }
         trackNaturalProgress(state, 'births', 1);
         archiveChronicleEvent(state, 'natural', `Nació ${bornBaby.name} (Generación ${bornBaby.generation ?? 2}).`);
+        emitSimEvent(state, 'birth', `Nació ${bornBaby.name}`, bornBaby.id, {
+          generation: bornBaby.generation ?? 2,
+        });
         newbornList.push(bornBaby);
         agent.childrenCount += 1;
         if (father) father.childrenCount += 1;
@@ -3842,6 +3853,7 @@ export function advanceDayAging(
       transferInheritance(state, agent);
       const cause = agent.illness ? `por ${agent.illness.name}` : `a los ${agent.ageYears} años`;
       addLog(state, `${agent.name} falleció ${cause}.`, 'rose');
+      emitSimEvent(state, 'death', `${agent.name} falleció ${cause}`, agent.id);
       pushSoundCue(state, 'sadness');
       continue;
     }
@@ -4324,6 +4336,32 @@ export function getSpecialBuildingObstacleBounds(
   };
 }
 
+export function getBridgeObstacleBounds(
+  bridge: BridgeStructure,
+  pad = 6
+): StructureObstacleBounds {
+  return {
+    minX: bridge.x - BRIDGE_HALF_WIDTH - pad,
+    maxX: bridge.x + BRIDGE_HALF_WIDTH + pad,
+    minY: RIVER_TOP_Y - 10 - pad,
+    maxY: RIVER_BOTTOM_Y + 10 + pad,
+  };
+}
+
+export function isPointInRiverOrBridge(y: number): boolean {
+  return y >= RIVER_TOP_Y - 10 && y <= RIVER_BOTTOM_Y + 10;
+}
+
+export function isPointOnRoad(
+  state: Pick<SimulationState, 'roads'>,
+  x: number,
+  y: number,
+  pad = 4
+): boolean {
+  const half = ROAD_GRID_SIZE / 2 + pad;
+  return state.roads.some((r) => Math.abs(x - r.x) <= half && Math.abs(y - r.y) <= half);
+}
+
 function isInsideBounds(x: number, y: number, b: StructureObstacleBounds): boolean {
   return x >= b.minX && x <= b.maxX && y >= b.minY && y <= b.maxY;
 }
@@ -4358,6 +4396,115 @@ export function isPointBlockedByStructures(
   return false;
 }
 
+export function isPointBlockedForResource(
+  state: SimulationState,
+  x: number,
+  y: number,
+  pad = 10
+): boolean {
+  if (isPointInRiverOrBridge(y)) return true;
+  if (state.bridge && isInsideBounds(x, y, getBridgeObstacleBounds(state.bridge, pad))) return true;
+  if (isPointBlockedByStructures(state, x, y, pad, true)) return true;
+  if (isPointOnRoad(state, x, y, Math.max(4, pad - 4))) return true;
+  return false;
+}
+
+export function isPointBlockedForAnimal(
+  state: SimulationState,
+  x: number,
+  y: number,
+  pad = 8
+): boolean {
+  if (isPointInRiverOrBridge(y)) return true;
+  if (state.bridge && isInsideBounds(x, y, getBridgeObstacleBounds(state.bridge, pad))) return true;
+  if (isPointBlockedByStructures(state, x, y, pad, true)) return true;
+  return false;
+}
+
+export function getResourceZoneXBounds(type: ResourceNode['type']): { minX: number; maxX: number } {
+  if (
+    type === 'stone' ||
+    type === 'copper' ||
+    type === 'iron' ||
+    type === 'silver' ||
+    type === 'gold'
+  ) {
+    return { minX: MOUNTAIN_MIN_X + 18, maxX: CANVAS_WIDTH - 28 };
+  }
+  if (
+    type === 'wood' ||
+    type === 'pine_wood' ||
+    type === 'maple_wood' ||
+    type === 'oak_wood' ||
+    type === 'food'
+  ) {
+    return { minX: 28, maxX: FOREST_MAX_X - 16 };
+  }
+  return { minX: FOREST_MAX_X + 24, maxX: MOUNTAIN_MIN_X - 24 };
+}
+
+export function findNearestClearResourceSpot(
+  state: SimulationState,
+  type: ResourceNode['type'],
+  x: number,
+  y: number,
+  pad = 10,
+  enforceZone = true
+): { x: number; y: number } {
+  const zone = enforceZone
+    ? getResourceZoneXBounds(type)
+    : { minX: 28, maxX: CANVAS_WIDTH - 28 };
+  const preferNorth = y < RIVER_TOP_Y;
+
+  const clampInZone = (cx: number, cy: number): { x: number; y: number } => {
+    const lx = clamp(cx, zone.minX, zone.maxX);
+    let ly = clamp(cy, NORTH_LAND_MIN_Y + 10, CANVAS_HEIGHT - 28);
+    if (isPointInRiverOrBridge(ly)) {
+      ly = preferNorth ? NORTH_LAND_MAX_Y - 12 : SAFE_LAND_MIN_Y + 14;
+    }
+    return { x: Math.round(lx), y: Math.round(ly) };
+  };
+
+  const isFree = (px: number, py: number, checkOverlap: boolean): boolean => {
+    if (isPointBlockedForResource(state, px, py, pad)) return false;
+    if (
+      checkOverlap &&
+      state.resources.some((r) => !r.depleted && Math.hypot(r.x - px, r.y - py) < 16)
+    ) {
+      return false;
+    }
+    return true;
+  };
+
+  const initial = clampInZone(x, y);
+  if (isFree(initial.x, initial.y, true)) return initial;
+
+  for (const checkOverlap of [true, false]) {
+    for (let radius = 16; radius <= 320; radius += 16) {
+      const steps = 16;
+      for (let i = 0; i < steps; i++) {
+        const angle = (i / steps) * Math.PI * 2;
+        const cand = clampInZone(
+          initial.x + Math.cos(angle) * radius,
+          initial.y + Math.sin(angle) * radius
+        );
+        if (isFree(cand.x, cand.y, checkOverlap)) return cand;
+      }
+    }
+  }
+
+  // Búsqueda determinista por rejilla dentro de la zona permitida si hubo congestión local
+  for (let gy = preferNorth ? NORTH_LAND_MIN_Y + 16 : SAFE_LAND_MIN_Y + 16; gy < CANVAS_HEIGHT - 32; gy += 28) {
+    if (isPointInRiverOrBridge(gy)) continue;
+    for (let gx = zone.minX + 6; gx <= zone.maxX - 6; gx += 28) {
+      const cand = clampInZone(gx, gy);
+      if (!isPointBlockedForResource(state, cand.x, cand.y, pad)) return cand;
+    }
+  }
+
+  return initial;
+}
+
 export function findNearestClearGroundSpot(
   state: SimulationState,
   x: number,
@@ -4365,34 +4512,32 @@ export function findNearestClearGroundSpot(
   pad = 10,
   includeSpecialBuildings = true
 ): { x: number; y: number } {
-  const bridgeX = state.bridge?.x ?? null;
   const preferNorth = y < RIVER_TOP_Y;
   const clampLand = (cx: number, cy: number): { x: number; y: number } => {
     const lx = clamp(cx, 28, CANVAS_WIDTH - 28);
     let ly = clamp(cy, NORTH_LAND_MIN_Y + 8, CANVAS_HEIGHT - 28);
-    if (isPointInRiverWater(lx, ly, bridgeX)) {
-      ly = preferNorth ? NORTH_LAND_MAX_Y - 10 : SAFE_LAND_MIN_Y + 12;
+    if (isPointInRiverOrBridge(ly)) {
+      ly = preferNorth ? NORTH_LAND_MAX_Y - 12 : SAFE_LAND_MIN_Y + 14;
     }
     return { x: Math.round(lx), y: Math.round(ly) };
   };
 
+  const isValid = (px: number, py: number): boolean =>
+    !isPointInRiverOrBridge(py) &&
+    !(state.bridge && isInsideBounds(px, py, getBridgeObstacleBounds(state.bridge, pad))) &&
+    !isPointBlockedByStructures(state, px, py, pad, includeSpecialBuildings);
+
   const initial = clampLand(x, y);
-  if (
-    !isPointInRiverWater(initial.x, initial.y, bridgeX) &&
-    !isPointBlockedByStructures(state, initial.x, initial.y, pad, includeSpecialBuildings)
-  ) {
+  if (isValid(initial.x, initial.y)) {
     return initial;
   }
 
-  for (let radius = 16; radius <= 260; radius += 14) {
+  for (let radius = 16; radius <= 320; radius += 14) {
     const steps = 16;
     for (let i = 0; i < steps; i++) {
       const angle = (i / steps) * Math.PI * 2;
       const cand = clampLand(initial.x + Math.cos(angle) * radius, initial.y + Math.sin(angle) * radius);
-      if (
-        !isPointInRiverWater(cand.x, cand.y, bridgeX) &&
-        !isPointBlockedByStructures(state, cand.x, cand.y, pad, includeSpecialBuildings)
-      ) {
+      if (isValid(cand.x, cand.y)) {
         return cand;
       }
     }
@@ -4409,10 +4554,7 @@ export function resolveAnimalObstacleStep(
   nextY: number,
   pad = 8
 ): { x: number; y: number; blocked: boolean } {
-  const bridgeX = state.bridge?.x ?? null;
-  const valid = (px: number, py: number) =>
-    !isPointInRiverWater(px, py, bridgeX) &&
-    !isPointBlockedByStructures(state, px, py, pad, true);
+  const valid = (px: number, py: number) => !isPointBlockedForAnimal(state, px, py, pad);
 
   if (valid(nextX, nextY)) {
     return { x: nextX, y: nextY, blocked: false };
@@ -4432,15 +4574,18 @@ export function resolveAnimalObstacleStep(
 
 export function relocateBlockedResourcesAndAnimals(state: SimulationState): void {
   for (const r of state.resources) {
-    if (isPointBlockedByStructures(state, r.x, r.y, 10, true)) {
-      const clear = findNearestClearGroundSpot(state, r.x, r.y, 12, true);
+    const zone = getResourceZoneXBounds(r.type);
+    const outOfZone =
+      r.type !== 'coins' && (r.x < zone.minX - 2 || r.x > zone.maxX + 2);
+    if (outOfZone || isPointBlockedForResource(state, r.x, r.y, 8)) {
+      const clear = findNearestClearResourceSpot(state, r.type, r.x, r.y, 10, true);
       r.x = clear.x;
       r.y = clear.y;
     }
   }
   for (const a of state.animals) {
     if (a.type === 'fish' || (a.type === 'horse' && a.riderId !== null)) continue;
-    if (isPointBlockedByStructures(state, a.x, a.y, 8, true)) {
+    if (isPointBlockedForAnimal(state, a.x, a.y, 8)) {
       const clear = findNearestClearGroundSpot(state, a.x, a.y, 10, true);
       a.x = clear.x;
       a.y = clear.y;
@@ -5164,6 +5309,12 @@ export function completeActiveConstruction(state: SimulationState, builder: Agen
     trackNaturalProgress(state, 'constructions', 1);
     recordAgentMemory(state, builder, 'work', `Completé obra (${ac.kind})`, 'positive');
     archiveChronicleEvent(state, 'natural', `${builder.name} completó obra (${ac.kind}).`);
+    emitSimEvent(state, 'construction', `${builder.name} completó ${ac.kind}`, builder.id, {
+      kind: ac.kind,
+    });
+    if (state.era !== prevEra) {
+      emitSimEvent(state, 'era_change', `Evolución a ${ERA_METADATA[state.era].label}`);
+    }
     if (state.era !== prevEra || ac.kind === 'plaza' || ac.kind === 'bridge') {
       pushSoundCue(state, 'celebration');
     } else {
@@ -5299,6 +5450,210 @@ export function tameWildAnimal(state: SimulationState, animal: Animal, tamer: Ag
   return true;
 }
 
+function snapToRoadGrid(x: number, y: number): { x: number; y: number } {
+  return {
+    x: clamp(Math.round(x / ROAD_GRID_SIZE) * ROAD_GRID_SIZE, 24, CANVAS_WIDTH - 24),
+    y: clamp(Math.round(y / ROAD_GRID_SIZE) * ROAD_GRID_SIZE, 24, CANVAS_HEIGHT - 24),
+  };
+}
+
+function findClearDoorGridPoint(
+  state: SimulationState,
+  rawX: number,
+  rawY: number
+): { x: number; y: number } {
+  const bridgeX = isBridgePassable(state) ? state.bridge!.x : null;
+  const base = snapToRoadGrid(rawX, rawY);
+  const isClear = (px: number, py: number) =>
+    !isPointInRiverWater(px, py, bridgeX) &&
+    !isPointBlockedByStructures(state, px, py, 0, true);
+  if (isClear(base.x, base.y)) return base;
+
+  const offsets = [
+    [0, ROAD_GRID_SIZE],
+    [0, -ROAD_GRID_SIZE],
+    [ROAD_GRID_SIZE, 0],
+    [-ROAD_GRID_SIZE, 0],
+    [ROAD_GRID_SIZE, ROAD_GRID_SIZE],
+    [-ROAD_GRID_SIZE, ROAD_GRID_SIZE],
+    [0, ROAD_GRID_SIZE * 2],
+  ];
+  for (const [ox, oy] of offsets) {
+    const cand = snapToRoadGrid(base.x + ox, base.y + oy);
+    if (isClear(cand.x, cand.y)) return cand;
+  }
+  return base;
+}
+
+export function getPlazaAccessPoint(
+  state: SimulationState,
+  targetX: number,
+  targetY: number
+): { x: number; y: number } {
+  if (!state.plaza) return snapToRoadGrid(WORLD_CENTER_X, SOUTH_CENTER_Y);
+  const px = state.plaza.x;
+  const py = state.plaza.y;
+  const candidates = [
+    findClearDoorGridPoint(state, px, py - 56),
+    findClearDoorGridPoint(state, px, py + 56),
+    findClearDoorGridPoint(state, px - 74, py),
+    findClearDoorGridPoint(state, px + 74, py),
+  ];
+  let best = candidates[0];
+  let bestD = Infinity;
+  for (const c of candidates) {
+    const d = Math.hypot(c.x - targetX, c.y - targetY);
+    if (d < bestD) {
+      bestD = d;
+      best = c;
+    }
+  }
+  return best;
+}
+
+export function getStructureDoorPoint(
+  state: SimulationState,
+  kind: 'house' | 'special' | 'farm',
+  entity: House | SpecialBuilding | FarmPlot
+): { x: number; y: number } {
+  if (kind === 'house') {
+    const h = entity as House;
+    const dy = h.size === 'large' ? 24 : h.size === 'medium' ? 20 : 18;
+    return findClearDoorGridPoint(state, h.x, h.y + dy);
+  }
+  if (kind === 'farm') {
+    const f = entity as FarmPlot;
+    const dy = f.size === 'large' ? 28 : f.size === 'medium' ? 24 : 20;
+    return findClearDoorGridPoint(state, f.x, f.y + dy);
+  }
+  const b = entity as SpecialBuilding;
+  if (b.type === 'dock') {
+    const dockDy = b.y < RIVER_TOP_Y ? -28 : 28;
+    return findClearDoorGridPoint(state, b.x, b.y + dockDy);
+  }
+  return findClearDoorGridPoint(state, b.x, b.y + 26);
+}
+
+export function hasAdjacentRoadTile(roads: RoadTile[], x: number, y: number): boolean {
+  const g = snapToRoadGrid(x, y);
+  return roads.some(
+    (r) => Math.abs(r.x - g.x) <= ROAD_GRID_SIZE && Math.abs(r.y - g.y) <= ROAD_GRID_SIZE
+  );
+}
+
+export function routeOrthogonalRoadPath(
+  state: SimulationState,
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  allowCrossBridge = false
+): Array<{ x: number; y: number }> {
+  const start = snapToRoadGrid(startX, startY);
+  const goal = snapToRoadGrid(endX, endY);
+  if (start.x === goal.x && start.y === goal.y) return [start];
+
+  const bridgeX = allowCrossBridge && isBridgePassable(state) ? state.bridge!.x : null;
+  const roadSet = new Set<string>();
+  for (const r of state.roads) {
+    roadSet.add(`${r.x},${r.y}`);
+  }
+
+  const startKey = `${start.x},${start.y}`;
+  const goalKey = `${goal.x},${goal.y}`;
+  const cols = Math.floor((CANVAS_WIDTH - 24) / ROAD_GRID_SIZE);
+  const rows = Math.floor((CANVAS_HEIGHT - 24) / ROAD_GRID_SIZE);
+
+  const open: Array<{ x: number; y: number; g: number; f: number; dir: number }> = [
+    {
+      x: start.x,
+      y: start.y,
+      g: 0,
+      f: (Math.abs(goal.x - start.x) + Math.abs(goal.y - start.y)) / ROAD_GRID_SIZE,
+      dir: -1,
+    },
+  ];
+  const bestG = new Map<string, number>([[startKey, 0]]);
+  const parent = new Map<string, string>();
+  const dirs = [
+    [ROAD_GRID_SIZE, 0],
+    [-ROAD_GRID_SIZE, 0],
+    [0, ROAD_GRID_SIZE],
+    [0, -ROAD_GRID_SIZE],
+  ];
+
+  let expanded = 0;
+  const maxExpand = cols * rows + 200;
+  let found = false;
+
+  while (open.length > 0 && expanded < maxExpand) {
+    expanded++;
+    let bestIdx = 0;
+    for (let i = 1; i < open.length; i++) {
+      if (open[i].f < open[bestIdx].f) bestIdx = i;
+    }
+    const cur = open.splice(bestIdx, 1)[0];
+    const curKey = `${cur.x},${cur.y}`;
+    if (curKey === goalKey) {
+      found = true;
+      break;
+    }
+    if (cur.g > (bestG.get(curKey) ?? Infinity) + 1e-6) continue;
+
+    for (let d = 0; d < 4; d++) {
+      const nx = cur.x + dirs[d][0];
+      const ny = cur.y + dirs[d][1];
+      if (nx < 24 || nx > CANVAS_WIDTH - 24 || ny < 24 || ny > CANVAS_HEIGHT - 24) continue;
+
+      const nKey = `${nx},${ny}`;
+      const isEndpoint = nKey === startKey || nKey === goalKey;
+      if (!isEndpoint) {
+        if (isPointInRiverWater(nx, ny, bridgeX)) continue;
+        if (isPointBlockedByStructures(state, nx, ny, 0, true)) continue;
+      } else if (isPointInRiverWater(nx, ny, bridgeX)) {
+        continue;
+      }
+
+      const baseCost = roadSet.has(nKey) ? 0.22 : 1.0;
+      const turnCost = cur.dir !== -1 && cur.dir !== d ? 0.08 : 0;
+      const ng = cur.g + baseCost + turnCost;
+      if (ng < (bestG.get(nKey) ?? Infinity) - 1e-6) {
+        bestG.set(nKey, ng);
+        parent.set(nKey, curKey);
+        const h = ((Math.abs(goal.x - nx) + Math.abs(goal.y - ny)) / ROAD_GRID_SIZE) * 0.22;
+        open.push({ x: nx, y: ny, g: ng, f: ng + h, dir: d });
+      }
+    }
+  }
+
+  if (found) {
+    const path: Array<{ x: number; y: number }> = [];
+    let k: string | undefined = goalKey;
+    while (k) {
+      const [px, py] = k.split(',').map(Number);
+      path.push({ x: px, y: py });
+      k = parent.get(k);
+    }
+    path.reverse();
+    return path;
+  }
+
+  // Fallback ortogonal en L si un obstáculo encierra por completo el destino
+  const fallback: Array<{ x: number; y: number }> = [];
+  let cx = start.x;
+  let cy = start.y;
+  fallback.push({ x: cx, y: cy });
+  while (cx !== goal.x) {
+    cx += cx < goal.x ? ROAD_GRID_SIZE : -ROAD_GRID_SIZE;
+    fallback.push({ x: cx, y: cy });
+  }
+  while (cy !== goal.y) {
+    cy += cy < goal.y ? ROAD_GRID_SIZE : -ROAD_GRID_SIZE;
+    fallback.push({ x: cx, y: cy });
+  }
+  return fallback;
+}
+
 export function addRoadTile(
   state: SimulationState,
   x: number,
@@ -5307,10 +5662,10 @@ export function addRoadTile(
   withLamp: boolean = state.selectedRoadLamp ?? false,
   payer?: Agent | null
 ): RoadTile | null {
-  const gx = clamp(Math.round(x / ROAD_GRID_SIZE) * ROAD_GRID_SIZE, 24, CANVAS_WIDTH - 24);
-  const gy = clamp(Math.round(y / ROAD_GRID_SIZE) * ROAD_GRID_SIZE, 24, CANVAS_HEIGHT - 24);
+  const { x: gx, y: gy } = snapToRoadGrid(x, y);
   const bridgeX = isBridgePassable(state) ? state.bridge!.x : null;
   if (isPointInRiverWater(gx, gy, bridgeX)) return null;
+  if (isPointBlockedByStructures(state, gx, gy, 0, true)) return null;
   const exists = state.roads.some((r) => r.x === gx && r.y === gy);
   if (exists) return null;
 
@@ -5342,6 +5697,15 @@ export function addRoadTile(
     durability: 100,
   };
   state.roads.push(tile);
+
+  // Desplazar recursos que quedaran sobre la nueva baldosa de camino
+  for (const r of state.resources) {
+    if (isPointOnRoad(state, r.x, r.y, 4)) {
+      const clear = findNearestClearResourceSpot(state, r.type, r.x, r.y, 10, true);
+      r.x = clear.x;
+      r.y = clear.y;
+    }
+  }
   return tile;
 }
 
@@ -5356,16 +5720,118 @@ function addRoadLine(
   payer: Agent | null
 ): number {
   let added = 0;
-  const steps = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1)) / ROAD_GRID_SIZE;
-  const n = Math.max(1, Math.ceil(steps));
-  for (let i = 0; i <= n; i++) {
-    const t = i / n;
-    const rx = x1 + (x2 - x1) * t;
-    const ry = y1 + (y2 - y1) * t;
-    const tile = addRoadTile(state, rx, ry, roadType, withLamp, payer);
+  const path = routeOrthogonalRoadPath(state, x1, y1, x2, y2, false);
+  for (const pt of path) {
+    const tile = addRoadTile(state, pt.x, pt.y, roadType, withLamp, payer);
     if (tile) added++;
   }
   return added;
+}
+
+function findNearestAnchorPoint(
+  state: SimulationState,
+  targetX: number,
+  targetY: number,
+  fallbackX: number,
+  fallbackY: number,
+  sameSideNorth: boolean
+): { x: number; y: number } {
+  let best = snapToRoadGrid(fallbackX, fallbackY);
+  let bestDist = Math.hypot(best.x - targetX, best.y - targetY);
+  for (const r of state.roads) {
+    const isNorth = r.y < RIVER_TOP_Y;
+    if (isNorth !== sameSideNorth) continue;
+    const d = Math.hypot(r.x - targetX, r.y - targetY);
+    if (d < bestDist) {
+      bestDist = d;
+      best = { x: r.x, y: r.y };
+    }
+  }
+  return best;
+}
+
+export function findNextUsefulRoadSegment(
+  state: SimulationState
+): Array<{ x: number; y: number }> | null {
+  const bridgePassable = isBridgePassable(state);
+  const endpoints: Array<{ x: number; y: number; north: boolean; priority: number }> = [];
+
+  if (state.bridge && bridgePassable) {
+    const southBridge = snapToRoadGrid(state.bridge.x, RIVER_BOTTOM_Y + 18);
+    const northBridge = snapToRoadGrid(state.bridge.x, RIVER_TOP_Y - 18);
+    endpoints.push({ x: southBridge.x, y: southBridge.y, north: false, priority: 1 });
+    endpoints.push({ x: northBridge.x, y: northBridge.y, north: true, priority: 1 });
+  }
+
+  for (const b of state.specialBuildings) {
+    const door = getStructureDoorPoint(state, 'special', b);
+    endpoints.push({ x: door.x, y: door.y, north: door.y < RIVER_TOP_Y, priority: 2 });
+  }
+  for (const h of state.houses) {
+    const door = getStructureDoorPoint(state, 'house', h);
+    endpoints.push({ x: door.x, y: door.y, north: h.zone === 'north', priority: 3 });
+  }
+  for (const f of state.farms) {
+    const gate = getStructureDoorPoint(state, 'farm', f);
+    endpoints.push({ x: gate.x, y: gate.y, north: f.y < RIVER_TOP_Y, priority: 4 });
+  }
+
+  if (endpoints.length === 0 && !state.plaza) return null;
+
+  // Buscar un destino útil sin conexión vial adyacente en su puerta/acceso
+  const sorted = [...endpoints].sort((a, b) => a.priority - b.priority);
+  for (const ep of sorted) {
+    if (ep.north && !bridgePassable) continue;
+    const alreadyConnected = hasAdjacentRoadTile(state.roads, ep.x, ep.y);
+    if (alreadyConnected) continue;
+
+    const hub = ep.north
+      ? state.bridge && bridgePassable
+        ? snapToRoadGrid(state.bridge.x, RIVER_TOP_Y - 18)
+        : snapToRoadGrid(WORLD_CENTER_X, NORTH_CENTER_Y)
+      : state.plaza
+        ? getPlazaAccessPoint(state, ep.x, ep.y)
+        : snapToRoadGrid(WORLD_CENTER_X, SOUTH_CENTER_Y);
+
+    const anchor = findNearestAnchorPoint(state, ep.x, ep.y, hub.x, hub.y, ep.north);
+    if (Math.hypot(anchor.x - ep.x, anchor.y - ep.y) <= ROAD_GRID_SIZE) continue;
+    const path = routeOrthogonalRoadPath(state, anchor.x, anchor.y, ep.x, ep.y, false);
+    if (path.length >= 2) return path;
+  }
+
+  // Si existen estructuras y al menos 1 camino, conectar sendero hacia Bosque/Montaña útiles
+  if (state.roads.length > 0 && state.houses.length + state.specialBuildings.length >= 3) {
+    const forestTrail = snapToRoadGrid(FOREST_MAX_X + 12, SOUTH_CENTER_Y);
+    if (!hasAdjacentRoadTile(state.roads, forestTrail.x, forestTrail.y)) {
+      const anchor = findNearestAnchorPoint(
+        state,
+        forestTrail.x,
+        forestTrail.y,
+        state.plaza?.x ?? WORLD_CENTER_X,
+        state.plaza?.y ?? SOUTH_CENTER_Y,
+        false
+      );
+      if (Math.hypot(anchor.x - forestTrail.x, anchor.y - forestTrail.y) <= 280) {
+        return routeOrthogonalRoadPath(state, anchor.x, anchor.y, forestTrail.x, forestTrail.y, false);
+      }
+    }
+    const mountainTrail = snapToRoadGrid(MOUNTAIN_MIN_X - 12, SOUTH_CENTER_Y);
+    if (!hasAdjacentRoadTile(state.roads, mountainTrail.x, mountainTrail.y)) {
+      const anchor = findNearestAnchorPoint(
+        state,
+        mountainTrail.x,
+        mountainTrail.y,
+        state.plaza?.x ?? WORLD_CENTER_X,
+        state.plaza?.y ?? SOUTH_CENTER_Y,
+        false
+      );
+      if (Math.hypot(anchor.x - mountainTrail.x, anchor.y - mountainTrail.y) <= 280) {
+        return routeOrthogonalRoadPath(state, anchor.x, anchor.y, mountainTrail.x, mountainTrail.y, false);
+      }
+    }
+  }
+
+  return null;
 }
 
 export function buildBaseRoads(
@@ -5379,37 +5845,118 @@ export function buildBaseRoads(
       ? payer
       : state.agents.find((a) => !a.isChild && a.jailedDays <= 0 && a.job === 'Constructor') ?? null;
 
+  const structureCount =
+    (state.plaza ? 1 : 0) +
+    (state.bridge ? 1 : 0) +
+    state.houses.length +
+    state.specialBuildings.length +
+    state.farms.length;
+  if (structureCount < 2) {
+    addLog(
+      state,
+      'No hay suficientes estructuras para trazar caminos útiles (se necesitan al menos dos destinos).',
+      'amber'
+    );
+    return 0;
+  }
+
   let added = 0;
-  const hubX = state.plaza ? state.plaza.x : WORLD_CENTER_X;
-  const hubY = state.plaza ? state.plaza.y : SOUTH_CENTER_Y;
   const bridgePassable = isBridgePassable(state);
 
+  // 1. Conectar Plaza <-> Entrada sur del Puente y tramo norte del Puente
   if (state.bridge && bridgePassable) {
-    added += addRoadLine(state, hubX, hubY, state.bridge.x, RIVER_BOTTOM_Y + 18, roadType, withLamp, effectivePayer);
-    added += addRoadLine(state, state.bridge.x, RIVER_BOTTOM_Y + 18, state.bridge.x, NORTH_CENTER_Y, roadType, withLamp, effectivePayer);
-    added += addRoadLine(state, state.bridge.x - 160, NORTH_CENTER_Y, state.bridge.x + 160, NORTH_CENTER_Y, roadType, withLamp, effectivePayer);
-  }
+    const bridgeSouth = snapToRoadGrid(state.bridge.x, RIVER_BOTTOM_Y + 18);
+    const plazaToBridge = state.plaza
+      ? getPlazaAccessPoint(state, bridgeSouth.x, bridgeSouth.y)
+      : snapToRoadGrid(WORLD_CENTER_X, SOUTH_CENTER_Y);
+    added += addRoadLine(
+      state,
+      plazaToBridge.x,
+      plazaToBridge.y,
+      bridgeSouth.x,
+      bridgeSouth.y,
+      roadType,
+      withLamp,
+      effectivePayer
+    );
 
-  for (const house of state.houses) {
-    if (house.zone === 'south') {
-      added += addRoadLine(state, hubX, hubY, house.x, house.y + 12, roadType, withLamp, effectivePayer);
-    } else if (state.bridge && bridgePassable) {
-      added += addRoadLine(state, state.bridge.x, NORTH_CENTER_Y, house.x, house.y + 12, roadType, withLamp, effectivePayer);
+    const bridgeNorth = snapToRoadGrid(state.bridge.x, RIVER_TOP_Y - 18);
+    const northTargetsExist =
+      state.houses.some((h) => h.zone === 'north') ||
+      state.farms.some((f) => f.y < RIVER_TOP_Y) ||
+      state.specialBuildings.some((b) => b.y < RIVER_TOP_Y);
+    if (northTargetsExist) {
+      addRoadTile(state, bridgeNorth.x, bridgeNorth.y, roadType, withLamp, effectivePayer);
     }
   }
+
+  // 2. Conectar edificios especiales, viviendas y cultivos desde su puerta/acceso hacia la red o Plaza más cercana
+  const southTargets: Array<{ x: number; y: number }> = [];
+  const northTargets: Array<{ x: number; y: number }> = [];
+
   for (const b of state.specialBuildings) {
-    added += addRoadLine(state, hubX, hubY, b.x, b.y + 12, roadType, withLamp, effectivePayer);
+    const door = getStructureDoorPoint(state, 'special', b);
+    if (door.y < RIVER_TOP_Y) northTargets.push(door);
+    else southTargets.push(door);
   }
+  for (const h of state.houses) {
+    const door = getStructureDoorPoint(state, 'house', h);
+    if (h.zone === 'north') northTargets.push(door);
+    else southTargets.push(door);
+  }
+  for (const f of state.farms) {
+    const gate = getStructureDoorPoint(state, 'farm', f);
+    if (f.y < RIVER_TOP_Y) northTargets.push(gate);
+    else southTargets.push(gate);
+  }
+
+  const southHubFallback = state.plaza
+    ? { x: state.plaza.x, y: state.plaza.y }
+    : { x: WORLD_CENTER_X, y: SOUTH_CENTER_Y };
+  southTargets.sort(
+    (a, b) =>
+      Math.hypot(a.x - southHubFallback.x, a.y - southHubFallback.y) -
+      Math.hypot(b.x - southHubFallback.x, b.y - southHubFallback.y)
+  );
+
+  for (const door of southTargets) {
+    const hubPt = state.plaza
+      ? getPlazaAccessPoint(state, door.x, door.y)
+      : snapToRoadGrid(WORLD_CENTER_X, SOUTH_CENTER_Y);
+    const anchor = findNearestAnchorPoint(state, door.x, door.y, hubPt.x, hubPt.y, false);
+    added += addRoadLine(state, anchor.x, anchor.y, door.x, door.y, roadType, withLamp, effectivePayer);
+  }
+
+  if (state.bridge && bridgePassable && northTargets.length > 0) {
+    const northBridge = snapToRoadGrid(state.bridge.x, RIVER_TOP_Y - 18);
+    northTargets.sort(
+      (a, b) =>
+        Math.hypot(a.x - northBridge.x, a.y - northBridge.y) -
+        Math.hypot(b.x - northBridge.x, b.y - northBridge.y)
+    );
+    for (const door of northTargets) {
+      const anchor = findNearestAnchorPoint(
+        state,
+        door.x,
+        door.y,
+        northBridge.x,
+        northBridge.y,
+        true
+      );
+      added += addRoadLine(state, anchor.x, anchor.y, door.x, door.y, roadType, withLamp, effectivePayer);
+    }
+  }
+
   if (added > 0) {
     addLog(
       state,
-      `Se trazaron ${added} tramos de camino (${roadType}${withLamp ? ' con farol' : ''}) pagando recursos reales.`,
+      `Se trazaron ${added} tramos de camino conectados puerta a puerta (${roadType}${withLamp ? ' con farol' : ''}) pagando recursos reales.`,
       'sky'
     );
   } else {
     addLog(
       state,
-      `No se pudieron trazar nuevos caminos: faltan materiales (${formatResourceCost(getRoadTileCost(roadType, withLamp))} por tramo) o no hay tramos nuevos.`,
+      `No se pudieron trazar nuevos caminos: faltan materiales (${formatResourceCost(getRoadTileCost(roadType, withLamp))} por tramo) o las puertas ya están conectadas.`,
       'amber'
     );
   }
@@ -5764,6 +6311,11 @@ export function buildQwenVillageTelemetry(state: SimulationState): Record<string
     leyesActivas: state.laws.filter((l) => l.active).map((l) => l.name),
     reservaEconomica: state.economyReserve,
     conocimiento: Math.round(state.knowledge),
+    sociedad: state.societyIndicators ?? null,
+    descubrimientos: (state.discoveries ?? []).map((d) => `${d.name}(${d.diffusionPct}%)`),
+    tradiciones: (state.culture?.traditions ?? []).filter((t) => t.status === 'active').map((t) => t.name),
+    crisisActivas: (state.crisisMonitor?.activeCrises ?? []).map((c) => `${c.title}(sev:${c.severity})`),
+    diplomacia: (state.externalCommunities ?? []).map((c) => `${c.name}:${c.relation}(conf:${c.trust})`),
     aldeanos: state.agents.map((a) => `${a.name}(${a.job},${a.ageYears}a,saber:${Math.round(a.education)}%)`),
   };
 }
@@ -6482,6 +7034,44 @@ export function interpretQwenDirective(
     summaryParts.push('control moderado de natalidad');
   }
 
+  if (q.includes('festival') || q.includes('festividad') || q.includes('festejo') || q.includes('celebrar')) {
+    actions.push({ type: 'DECLARE_FESTIVAL' });
+    summaryParts.push('convocatoria a festividad cultural con recursos reales');
+  }
+
+  if (
+    q.includes('diplomacia') ||
+    q.includes('comercio exterior') ||
+    q.includes('importar') ||
+    q.includes('exportar') ||
+    q.includes('comarca') ||
+    q.includes('puerto bruma')
+  ) {
+    const kind: 'import' | 'export' | 'knowledge' = q.includes('importar')
+      ? 'import'
+      : q.includes('conocimiento') || q.includes('intercambio cultural')
+        ? 'knowledge'
+        : 'export';
+    const good: TradeGoodKey = q.includes('comida') || q.includes('alimento')
+      ? 'food'
+      : q.includes('piedra')
+        ? 'stone'
+        : q.includes('hierro')
+          ? 'iron'
+          : q.includes('medicin')
+            ? 'medicine'
+            : q.includes('herramienta')
+              ? 'tools'
+              : 'wood';
+    actions.push({ type: 'DIPLOMATIC_TRADE', kind, good, amount: clamp(requestedCount, 2, 10) });
+    summaryParts.push('gestión diplomática y comercio exterior');
+  }
+
+  if (q.includes('mitigar') || q.includes('emergencia') || q.includes('contener crisis') || q.includes('aliviar crisis')) {
+    actions.push({ type: 'MITIGATE_CRISIS' });
+    summaryParts.push('protocolo de mitigación de crisis sistémicas');
+  }
+
   if (actions.length === 0) {
     actions.push({ type: 'ASSIGN_ACTIVE_JOBS' });
     actions.push({ type: 'BOOST_EVOLUTION', knowledgeGain: 25 });
@@ -6537,6 +7127,16 @@ const VALID_LAW_IDS = new Set<VillageLawId>([
   'winter_rationing',
   'night_watch',
   'mining_priority',
+]);
+const VALID_TRADE_GOODS = new Set<TradeGoodKey>([
+  'food',
+  'wood',
+  'stone',
+  'copper',
+  'iron',
+  'tools',
+  'medicine',
+  'bread',
 ]);
 
 function safeFiniteInt(val: unknown, fallback: number, min: number, max: number): number {
@@ -6817,6 +7417,36 @@ export function sanitizeQwenActions(rawActions: unknown): QwenAction[] {
         });
         break;
       }
+      case 'DECLARE_FESTIVAL':
+        safe.push({
+          type: 'DECLARE_FESTIVAL',
+          traditionName:
+            typeof raw.traditionName === 'string' && raw.traditionName.trim()
+              ? raw.traditionName.trim().slice(0, 80)
+              : undefined,
+        });
+        break;
+      case 'DIPLOMATIC_TRADE':
+        safe.push({
+          type: 'DIPLOMATIC_TRADE',
+          communityId:
+            typeof raw.communityId === 'string' && raw.communityId.trim()
+              ? raw.communityId.trim().slice(0, 50)
+              : undefined,
+          kind:
+            raw.kind === 'import' || raw.kind === 'export' || raw.kind === 'knowledge'
+              ? raw.kind
+              : undefined,
+          good:
+            typeof raw.good === 'string' && VALID_TRADE_GOODS.has(raw.good as TradeGoodKey)
+              ? (raw.good as TradeGoodKey)
+              : undefined,
+          amount: raw.amount !== undefined ? safeFiniteInt(raw.amount, 4, 1, 20) : undefined,
+        });
+        break;
+      case 'MITIGATE_CRISIS':
+        safe.push({ type: 'MITIGATE_CRISIS' });
+        break;
     }
   }
 
@@ -7561,11 +8191,19 @@ export function applyQwenActions(
           const bank = state.specialBuildings.find((b) => b.type === 'bank');
           if (bank) bank.storage[action.resource] += amount;
           if (!state.resourcesPaused) {
+            const clearMetal = findNearestClearResourceSpot(
+              state,
+              action.resource,
+              MOUNTAIN_MIN_X + 36 + Math.random() * (CANVAS_WIDTH - MOUNTAIN_MIN_X - 72),
+              SAFE_LAND_MIN_Y + 24 + Math.random() * (CANVAS_HEIGHT - SAFE_LAND_MIN_Y - 60),
+              10,
+              true
+            );
             state.resources.push({
               id: state.nextId++,
               type: action.resource,
-              x: MOUNTAIN_MIN_X + 36 + Math.random() * (CANVAS_WIDTH - MOUNTAIN_MIN_X - 72),
-              y: SAFE_LAND_MIN_Y + 24 + Math.random() * (CANVAS_HEIGHT - SAFE_LAND_MIN_Y - 60),
+              x: clearMetal.x,
+              y: clearMetal.y,
               amount: 6,
               maxAmount: 6,
               depleted: false,
@@ -7711,13 +8349,15 @@ export function applyQwenActions(
             action.resource === 'iron' ||
             action.resource === 'gold' ||
             action.resource === 'silver';
+          const isForest =
+            action.resource === 'wood' || action.resource === 'food';
           const rx = isMetal
             ? MOUNTAIN_MIN_X + 24 + Math.random() * (CANVAS_WIDTH - MOUNTAIN_MIN_X - 60)
-            : action.resource === 'wood'
-              ? 40 + Math.random() * (FOREST_MAX_X - 70)
-              : 120 + Math.random() * (CANVAS_WIDTH - 240);
-          const rawY = SAFE_LAND_MIN_Y + 12 + Math.random() * (CANVAS_HEIGHT - SAFE_LAND_MIN_Y - 50);
-          const clearSpot = findNearestClearGroundSpot(state, rx, rawY, 12, true);
+            : isForest
+              ? 34 + Math.random() * (FOREST_MAX_X - 56)
+              : FOREST_MAX_X + 30 + Math.random() * (MOUNTAIN_MIN_X - FOREST_MAX_X - 60);
+          const rawY = SAFE_LAND_MIN_Y + 18 + Math.random() * (CANVAS_HEIGHT - SAFE_LAND_MIN_Y - 56);
+          const clearSpot = findNearestClearResourceSpot(state, action.resource, rx, rawY, 10, true);
           state.resources.push({
             id: state.nextId++,
             type: action.resource,
@@ -7742,6 +8382,13 @@ export function applyQwenActions(
         }
         executed.push(`Ánimo ajustado (${action.delta >= 0 ? '+' : ''}${action.delta})`);
         addLog(state, 'Qwen 2.5 moduló el estado emocional de la aldea.', 'sky');
+        break;
+      }
+      case 'DECLARE_FESTIVAL':
+      case 'DIPLOMATIC_TRADE':
+      case 'MITIGATE_CRISIS': {
+        const msg = dispatchQwenActionExtension(state, action);
+        if (msg) executed.push(msg);
         break;
       }
     }

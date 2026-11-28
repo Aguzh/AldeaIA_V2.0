@@ -32,6 +32,8 @@ interface TopBarProps {
   onSetLayout: (mode: LayoutMode) => void;
   onOpenStats: () => void;
   onOpenFamilies: () => void;
+  onOpenCivilization?: () => void;
+  activeCrisesCount?: number;
   onOpenSaveLoad: () => void;
   onOpenDownload: () => void;
   onRequestReset: () => void;
@@ -47,6 +49,8 @@ export function TopBar({
   onSetLayout,
   onOpenStats,
   onOpenFamilies,
+  onOpenCivilization,
+  activeCrisesCount = 0,
   onOpenSaveLoad,
   onOpenDownload,
   onRequestReset,
@@ -206,6 +210,24 @@ export function TopBar({
         >
           Familias
         </button>
+
+        {onOpenCivilization && (
+          <button
+            type="button"
+            onClick={onOpenCivilization}
+            data-testid="open-civilization-btn"
+            className="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-sky-700/70 bg-sky-950/60 text-sky-200 hover:bg-sky-900/70 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5"
+          >
+            <span>Civilización</span>
+            {activeCrisesCount > 0 && (
+              <span
+                className="w-2 h-2 rounded-full bg-rose-400 shrink-0"
+                title={`${activeCrisesCount} crisis activa(s)`}
+                aria-label={`${activeCrisesCount} crisis activa(s)`}
+              />
+            )}
+          </button>
+        )}
 
         <button
           type="button"

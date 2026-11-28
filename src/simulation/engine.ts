@@ -42,6 +42,8 @@ import {
   ERA_METADATA,
   extinguishFire,
   findNearestClearGroundSpot,
+  findNearestClearResourceSpot,
+  findNextUsefulRoadSegment,
   FISH_VARIANTS,
   FOREST_MAX_X,
   generateEmergentDialogue,
@@ -49,6 +51,7 @@ import {
   getCompetingBuildingCount,
   getConciseTaskLabel,
   getEmotionWorkMultiplier,
+  getInsideBuildingAgentIds,
   getOperationalDepots,
   grantBankLoan,
   interpretQwenDirective,
@@ -57,6 +60,7 @@ import {
   isLawActive,
   isNearRoad,
   isNightMinute,
+  isPointBlockedForAnimal,
   isPointInRiverWater,
   mintBackedCoins,
   MOUNTAIN_MIN_X,
@@ -125,6 +129,14 @@ import {
   parseStructuredAIJson,
   queryAIProvider,
 } from './aiProviders';
+import {
+  ensureAllExpansionDefaults,
+  onAgentDeathExpansionHook,
+  onNewbornExpansionHook,
+  runDailyCivilizationPipeline,
+  updateEnginePerfMetrics,
+} from './civilizationPipeline';
+import { emitSimEvent } from './eventBus';
 
 import { renderWorldScene, type CameraView } from '../render/worldRenderer';
 
@@ -259,6 +271,10 @@ export function createAgent(
     reproductionCooldown: 0,
     moodModifier: 0,
     activeConstruction: null,
+    birthDay: 1,
+    jobsHeld: [ageYears < 10 ? 'Aprendiz' : 'Recolector'],
+    discoveriesAuthored: [],
+    knownDiscoveries: [],
   };
 }
 
@@ -305,10 +321,10 @@ export function spawnResource(
   if (state.resourcesPaused && !bypassPause) return false;
   const clampedX = clamp(x, 30, CANVAS_WIDTH - 30);
   let clampedY = clamp(y, NORTH_LAND_MIN_Y + 6, CANVAS_HEIGHT - 30);
-  if (isPointInRiverWater(clampedX, clampedY, state.bridge?.x ?? null)) {
-    clampedY = SAFE_LAND_MIN_Y + 12;
+  if (isPointInRiverWater(clampedX, clampedY, null)) {
+    clampedY = clampedY < (RIVER_TOP_Y + RIVER_BOTTOM_Y) / 2 ? NORTH_LAND_MAX_Y - 12 : SAFE_LAND_MIN_Y + 14;
   }
-  const clearSpot = findNearestClearGroundSpot(state, clampedX, clampedY, 12, true);
+  const clearSpot = findNearestClearResourceSpot(state, type, clampedX, clampedY, 10, true);
   const maxAmt = 8;
   state.resources.push({
     id: state.nextId++,
@@ -324,17 +340,19 @@ export function spawnResource(
 }
 
 function pickBiasedResourceX(type: ResourceNode['type']): number {
-  if (type === 'wood' || type === 'pine_wood' || type === 'maple_wood' || type === 'oak_wood') {
-    return Math.random() < 0.78
-      ? 38 + Math.random() * (FOREST_MAX_X - 56)
-      : FOREST_MAX_X + 30 + Math.random() * (MOUNTAIN_MIN_X - FOREST_MAX_X - 80);
+  if (
+    type === 'wood' ||
+    type === 'pine_wood' ||
+    type === 'maple_wood' ||
+    type === 'oak_wood' ||
+    type === 'food'
+  ) {
+    return 30 + Math.random() * (FOREST_MAX_X - 48);
   }
   if (type === 'stone' || type === 'copper' || type === 'iron' || type === 'silver' || type === 'gold') {
-    return Math.random() < 0.82
-      ? MOUNTAIN_MIN_X + 20 + Math.random() * (CANVAS_WIDTH - MOUNTAIN_MIN_X - 58)
-      : FOREST_MAX_X + 80 + Math.random() * (MOUNTAIN_MIN_X - FOREST_MAX_X - 100);
+    return MOUNTAIN_MIN_X + 20 + Math.random() * (CANVAS_WIDTH - MOUNTAIN_MIN_X - 50);
   }
-  return FOREST_MAX_X - 60 + Math.random() * (MOUNTAIN_MIN_X - FOREST_MAX_X + 120);
+  return FOREST_MAX_X + 36 + Math.random() * (MOUNTAIN_MIN_X - FOREST_MAX_X - 72);
 }
 
 export function createInitialState(): SimulationState {
@@ -456,19 +474,20 @@ export function createInitialState(): SimulationState {
 
   for (const agent of state.agents) {
     agent.job = assignBalancedJob(agent, state.agents, state.houses, state.policies, state.specialBuildings);
+    agent.jobsHeld = [agent.job];
     assignQwenAppearanceSetup(state, agent, { reason: 'vestimenta y estilo inicial' });
     agent.qwenPlan = `Juntar recursos como ${agent.job} para levantar las primeras casas`;
     agent.lastQwenDecision = `Qwen 2.5 asignó misión inicial ${agent.job} y definió su estilo visual.`;
   }
 
-  const forestTypes: ResourceNode['type'][] = ['wood', 'wood', 'pine_wood', 'maple_wood', 'oak_wood', 'food'];
-  for (let i = 0; i < 30; i++) {
+  const forestTypes: ResourceNode['type'][] = ['wood', 'wood', 'pine_wood', 'maple_wood', 'oak_wood', 'food', 'food'];
+  for (let i = 0; i < 36; i++) {
     const t = forestTypes[i % forestTypes.length];
     const inNorth = i % 4 === 0;
     spawnResource(
       state,
       t,
-      40 + Math.random() * (FOREST_MAX_X - 60),
+      32 + Math.random() * (FOREST_MAX_X - 50),
       inNorth
         ? NORTH_LAND_MIN_Y + 26 + Math.random() * (NORTH_LAND_MAX_Y - NORTH_LAND_MIN_Y - 52)
         : SAFE_LAND_MIN_Y + 24 + Math.random() * (CANVAS_HEIGHT - SAFE_LAND_MIN_Y - 72),
@@ -477,13 +496,13 @@ export function createInitialState(): SimulationState {
   }
 
   const mountainTypes: ResourceNode['type'][] = ['stone', 'copper', 'iron', 'copper', 'silver', 'gold'];
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 34; i++) {
     const t = mountainTypes[i % mountainTypes.length];
     const inNorth = i % 4 === 0;
     spawnResource(
       state,
       t,
-      MOUNTAIN_MIN_X + 20 + Math.random() * (CANVAS_WIDTH - MOUNTAIN_MIN_X - 58),
+      MOUNTAIN_MIN_X + 20 + Math.random() * (CANVAS_WIDTH - MOUNTAIN_MIN_X - 50),
       inNorth
         ? NORTH_LAND_MIN_Y + 26 + Math.random() * (NORTH_LAND_MAX_Y - NORTH_LAND_MIN_Y - 52)
         : SAFE_LAND_MIN_Y + 24 + Math.random() * (CANVAS_HEIGHT - SAFE_LAND_MIN_Y - 72),
@@ -491,13 +510,13 @@ export function createInitialState(): SimulationState {
     );
   }
 
-  const valleyTypes: ResourceNode['type'][] = ['food', 'wood', 'stone', 'copper', 'food', 'coins'];
-  for (let i = 0; i < 18; i++) {
-    const inNorth = i % 4 === 0;
+  // Monedas perdidas puntuales en el valle (maderas/comida SOLO en bosque y minerales SOLO en montañas)
+  for (let i = 0; i < 4; i++) {
+    const inNorth = i === 0;
     spawnResource(
       state,
-      valleyTypes[i % valleyTypes.length],
-      FOREST_MAX_X + 45 + Math.random() * (MOUNTAIN_MIN_X - FOREST_MAX_X - 90),
+      'coins',
+      FOREST_MAX_X + 55 + Math.random() * (MOUNTAIN_MIN_X - FOREST_MAX_X - 110),
       inNorth
         ? NORTH_LAND_MIN_Y + 32 + Math.random() * (NORTH_LAND_MAX_Y - NORTH_LAND_MIN_Y - 64)
         : SAFE_LAND_MIN_Y + 26 + Math.random() * (CANVAS_HEIGHT - SAFE_LAND_MIN_Y - 78),
@@ -540,6 +559,7 @@ export function createInitialState(): SimulationState {
   }
 
   ensureCivilizationDefaults(state);
+  ensureAllExpansionDefaults(state);
   recordDailySnapshot(state);
   addLog(
     state,
@@ -659,24 +679,23 @@ function findMissingMaterialNodeType(
 
 function tryOrganicRoadConstruction(state: SimulationState, agent: Agent): boolean {
   if (state.knowledge < 14 || agent.isChild || agent.job !== 'Constructor') return false;
-  if (state.roads.length >= 140) return false;
-  if (isNearRoad(state.roads, agent.x, agent.y)) return false;
+  if (state.roads.length >= 160) return false;
 
-  const nearHub =
-    (state.plaza && Math.hypot(agent.x - state.plaza.x, agent.y - state.plaza.y) < 160) ||
-    state.houses.some((h) => Math.hypot(agent.x - h.x, agent.y - h.y) < 95) ||
-    state.specialBuildings.some((b) => Math.hypot(agent.x - b.x, agent.y - b.y) < 95);
-  if (!nearHub) return false;
+  const route = findNextUsefulRoadSegment(state);
+  if (!route || route.length < 2) return false;
 
-  const tile = addRoadTile(
-    state,
-    agent.x,
-    agent.y,
-    state.selectedRoadType ?? 'dirt',
-    state.selectedRoadLamp ?? false,
-    agent
-  );
-  if (!tile) return false;
+  const roadType = state.selectedRoadType ?? 'dirt';
+  const withLamp = state.selectedRoadLamp ?? false;
+  let placed = 0;
+  // Traza hasta 4 tramos consecutivos de la ruta puerta-a-puerta para no dejar bloques aislados
+  for (const pt of route) {
+    const tile = addRoadTile(state, pt.x, pt.y, roadType, withLamp, agent);
+    if (tile) {
+      placed++;
+      if (placed >= 4) break;
+    }
+  }
+  if (placed === 0) return false;
   agent.constructionKnowledge = clamp(agent.constructionKnowledge + 1, 0, 100);
   return true;
 }
@@ -1189,6 +1208,61 @@ function moveTowards(
   return Math.hypot(tx - agent.x, ty - agent.y);
 }
 
+function resolveAgentHitboxSeparation(
+  state: SimulationState,
+  bridgeX: number | null
+): void {
+  const agents = state.agents;
+  if (agents.length < 2) return;
+  const insideIds = getInsideBuildingAgentIds(state);
+
+  for (let pass = 0; pass < 2; pass++) {
+    for (let i = 0; i < agents.length; i++) {
+      const a = agents[i];
+      if (insideIds.has(a.id)) continue;
+      const rA = a.isChild ? 5.5 : 7.5;
+
+      for (let j = i + 1; j < agents.length; j++) {
+        const b = agents[j];
+        if (insideIds.has(b.id)) continue;
+        const rB = b.isChild ? 5.5 : 7.5;
+        const minDist = rA + rB;
+
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        if (Math.abs(dx) >= minDist || Math.abs(dy) >= minDist) continue;
+        let dist = Math.hypot(dx, dy);
+        if (dist >= minDist) continue;
+
+        if (dist < 0.001) {
+          const angle = ((a.id * 2654435761 + b.id * 1597334677) % 360) * (Math.PI / 180);
+          dx = Math.cos(angle);
+          dy = Math.sin(angle);
+          dist = 1;
+        }
+
+        const overlap = (minDist - dist) * 0.52;
+        const nx = dx / dist;
+        const ny = dy / dist;
+
+        const nextAx = clamp(a.x - nx * overlap, 24, CANVAS_WIDTH - 24);
+        const nextAy = clamp(a.y - ny * overlap, NORTH_LAND_MIN_Y, CANVAS_HEIGHT - 24);
+        const nextBx = clamp(b.x + nx * overlap, 24, CANVAS_WIDTH - 24);
+        const nextBy = clamp(b.y + ny * overlap, NORTH_LAND_MIN_Y, CANVAS_HEIGHT - 24);
+
+        if (!isPointInRiverWater(nextAx, nextAy, bridgeX)) {
+          a.x = nextAx;
+          a.y = nextAy;
+        }
+        if (!isPointInRiverWater(nextBx, nextBy, bridgeX)) {
+          b.x = nextBx;
+          b.y = nextBy;
+        }
+      }
+    }
+  }
+}
+
 function tickAnimals(state: SimulationState, dt: number): void {
   const guardians = state.animals.filter((a) => a.type === 'dog' || a.tamed);
   const horses = state.animals.filter((a) => a.type === 'horse');
@@ -1228,6 +1302,12 @@ function tickAnimals(state: SimulationState, dt: number): void {
         animal.walkFrame = rider.walkFrame;
         continue;
       }
+    }
+
+    if (isPointBlockedForAnimal(state, animal.x, animal.y, 8)) {
+      const safeSpot = findNearestClearGroundSpot(state, animal.x, animal.y, 10, true);
+      animal.x = safeSpot.x;
+      animal.y = safeSpot.y;
     }
 
     if (animal.type === 'dog' || animal.tamed) {
@@ -1345,6 +1425,7 @@ function tickAnimals(state: SimulationState, dt: number): void {
 export function tickSimulation(state: SimulationState, elapsedSeconds = 1 / 60): void {
   if (state.speed === 0) return;
 
+  const tickStart = typeof performance !== 'undefined' ? performance.now() : Date.now();
   const dt = 16.8 * elapsedSeconds * state.speed;
   const timing = SPEED_TIMINGS[state.speed];
   const dayRate = DAY_GAME_MINUTES / timing.daySeconds;
@@ -1411,6 +1492,7 @@ export function tickSimulation(state: SimulationState, elapsedSeconds = 1 / 60):
       if (state.minute >= 1440) {
         state.minute = 0;
         state.day += 1;
+        const prevAgentsById = new Map(state.agents.map((a) => [a.id, a]));
         advanceDayAging(state, (st, mother, father) => {
           const childSex: 'M' | 'F' = Math.random() < 0.5 ? 'M' : 'F';
           const childName = pickQwenBabyName(childSex, st);
@@ -1426,10 +1508,30 @@ export function tickSimulation(state: SimulationState, elapsedSeconds = 1 / 60):
             0
           );
           child.coins = 0;
+          child.birthDay = st.day;
+          child.motherId = mother.id;
+          child.fatherId = father?.id ?? null;
+          child.familyId = mother.familyId ?? father?.familyId;
           child.houseId = mother.houseId ?? father?.houseId ?? null;
           child.lastQwenDecision = `Qwen 2.5 eligió el nombre ${childName} al concluir embarazo de 3 días.`;
           return child;
         });
+
+        const currentIds = new Set(state.agents.map((a) => a.id));
+        for (const [prevId, prevAgent] of prevAgentsById.entries()) {
+          if (!currentIds.has(prevId)) {
+            const cause = prevAgent.illness ? `por ${prevAgent.illness.name}` : `a los ${prevAgent.ageYears} años`;
+            onAgentDeathExpansionHook(state, prevAgent, cause);
+          }
+        }
+        for (const agent of state.agents) {
+          if (!prevAgentsById.has(agent.id)) {
+            const mother = (agent.motherId ? prevAgentsById.get(agent.motherId) : undefined) ?? agent;
+            const father = agent.fatherId ? (prevAgentsById.get(agent.fatherId) ?? null) : null;
+            onNewbornExpansionHook(state, agent, mother, father);
+          }
+        }
+        runDailyCivilizationPipeline(state);
 
         // Tormenta eléctrica espontánea si el clima es thunderstorm
         if (state.weather === 'thunderstorm' && Math.random() < 0.55) {
@@ -1514,11 +1616,14 @@ export function tickSimulation(state: SimulationState, elapsedSeconds = 1 / 60):
     Math.random() < 0.25 * elapsedSeconds * state.speed &&
     state.resources.length < 70
   ) {
+    const rainNorth = Math.random() < 0.25;
     spawnResource(
       state,
       'food',
-      70 + Math.random() * (CANVAS_WIDTH - 140),
-      SAFE_LAND_MIN_Y + 18 + Math.random() * (CANVAS_HEIGHT - SAFE_LAND_MIN_Y - 64)
+      30 + Math.random() * (FOREST_MAX_X - 50),
+      rainNorth
+        ? NORTH_LAND_MIN_Y + 22 + Math.random() * (NORTH_LAND_MAX_Y - NORTH_LAND_MIN_Y - 44)
+        : SAFE_LAND_MIN_Y + 18 + Math.random() * (CANVAS_HEIGHT - SAFE_LAND_MIN_Y - 64)
     );
   }
 
@@ -2450,9 +2555,27 @@ export function tickSimulation(state: SimulationState, elapsedSeconds = 1 / 60):
     agent.importance = computeAgentImportance(agent);
   }
 
+  // Hitboxes sólidas entre aldeanos visibles (adultos, ancianos y niños) para evitar encimamiento
+  resolveAgentHitboxSeparation(state, currentBridgeX);
+  for (const horse of state.animals) {
+    if (horse.type === 'horse' && horse.riderId !== null) {
+      const rider = state.agents.find((a) => a.id === horse.riderId);
+      if (rider) {
+        horse.x = rider.x;
+        horse.y = rider.y + 4;
+      }
+    }
+  }
+
   if (deadIds.length > 0) {
     const deadSet = new Set(deadIds);
+    const deadAgents = state.agents.filter((a) => deadSet.has(a.id));
     state.agents = state.agents.filter((a) => !deadSet.has(a.id));
+    for (const d of deadAgents) {
+      const cause = d.illness ? `por ${d.illness.name}` : `a los ${d.ageYears} años`;
+      emitSimEvent(state, 'death', `${d.name} falleció ${cause}`, d.id);
+      onAgentDeathExpansionHook(state, d, cause);
+    }
     for (const a of state.agents) {
       if (a.partnerId !== null && deadSet.has(a.partnerId)) a.partnerId = null;
     }
@@ -2466,13 +2589,20 @@ export function tickSimulation(state: SimulationState, elapsedSeconds = 1 / 60):
     ensureQwenControlledRepresentative(state);
   }
 
-  // Interacciones sociales emergentes, parejas (desde 15 años) y concepción de embarazo (desde 20 años, 3 días)
-  for (let i = 0; i < state.agents.length; i++) {
+  // Interacciones sociales emergentes con LOD determinista para poblaciones altas (50-100+ aldeanos)
+  const popCount = state.agents.length;
+  const pairStride = popCount >= 90 ? 4 : popCount >= 45 ? 2 : 1;
+  const pairPhase = Math.floor(state.minute) % pairStride;
+  const talkChance = Math.min(0.45, 0.032 * state.speed * pairStride);
+
+  for (let i = 0; i < popCount; i++) {
     const a = state.agents[i];
-    for (let j = i + 1; j < state.agents.length; j++) {
+    for (let j = i + 1; j < popCount; j++) {
+      if (pairStride > 1 && (i + j) % pairStride !== pairPhase) continue;
       const b = state.agents[j];
+      if (Math.abs(b.x - a.x) >= 28 || Math.abs(b.y - a.y) >= 28) continue;
       const d = Math.hypot(b.x - a.x, b.y - a.y);
-      if (d < 28 && Math.random() < 0.032 * state.speed) {
+      if (d < 28 && Math.random() < talkChance) {
         a.talkingTimer = 14;
         b.talkingTimer = 14;
         const dialogue = generateEmergentDialogue(a, b, state);
@@ -2525,6 +2655,7 @@ export function tickSimulation(state: SimulationState, elapsedSeconds = 1 / 60):
             a.partnerId = b.id;
             b.partnerId = a.id;
             addLog(state, `${a.name} y ${b.name} formaron pareja.`, 'violet');
+            emitSimEvent(state, 'marriage', `${a.name} y ${b.name} formaron pareja`, a.id);
             pushSoundCue(state, 'celebration');
           }
         }
@@ -2562,9 +2693,12 @@ export function tickSimulation(state: SimulationState, elapsedSeconds = 1 / 60):
   if (nextEra !== state.era) {
     state.era = nextEra;
     addLog(state, `¡Hito histórico! La aldea evolucionó a ${ERA_METADATA[nextEra].label}.`, 'emerald');
+    emitSimEvent(state, 'era_change', `Evolución a ${ERA_METADATA[nextEra].label}`);
     pushSoundCue(state, 'celebration');
   }
   recalculateEconomyReserve(state);
+  const tickEnd = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  updateEnginePerfMetrics(state, Math.max(0, tickEnd - tickStart));
 }
 
 export function renderWorld(
@@ -2702,6 +2836,9 @@ Responde EXCLUSIVAMENTE un JSON válido con:
     { "type": "TOGGLE_LAW", "lawId": "ban_trade_wood|ban_fishing|ban_trade_bread|ban_mine_gold|winter_rationing|night_watch|mining_priority", "active": true },
     { "type": "BOOST_EVOLUTION", "knowledgeGain": 45 },
     { "type": "HEAL_VILLAGERS" },
+    { "type": "DECLARE_FESTIVAL", "traditionName": "opcional" },
+    { "type": "DIPLOMATIC_TRADE", "communityId": "valle_roble|puerto_bruma|risco_hierro|vega_clara", "kind": "import|export|knowledge", "good": "food|wood|stone|iron|tools|medicine", "amount": 4 },
+    { "type": "MITIGATE_CRISIS" },
     { "type": "REPORT_DATA", "answer": "si solo es pregunta/consulta sin modificar nada" }
   ]
 }

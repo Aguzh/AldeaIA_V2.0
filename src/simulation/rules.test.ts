@@ -54,6 +54,7 @@ import {
   enforceLawViolation,
   ensureQwenControlledRepresentative,
   extinguishFire,
+  findNextUsefulRoadSegment,
   FISH_VARIANTS,
   FOREST_MAX_X,
   getBuildingOccupancySnapshot,
@@ -79,7 +80,11 @@ import {
   isNearRoad,
   isNightMinute,
   isPointBlockedByStructures,
+  isPointBlockedForAnimal,
+  isPointBlockedForResource,
+  isPointInRiverOrBridge,
   isPointInRiverWater,
+  isPointOnRoad,
   killAgent,
   killAllCrops,
   killCropPlotAt,
@@ -104,6 +109,7 @@ import {
   queryVillageData,
   rebalanceBuildingOwnership,
   rebalanceFamilyHousing,
+  relocateBlockedResourcesAndAnimals,
   repairDamagedStructures,
   resolveAnimalObstacleStep,
   resolvePetition,
@@ -111,6 +117,7 @@ import {
   RIVER_BOTTOM_Y,
   RIVER_FISH_RESTOCK_DAYS,
   RIVER_TOP_Y,
+  ROAD_GRID_SIZE,
   runCouncilOfElders,
   runQwenRepresentativeAutonomousTurn,
   runThirtyDayMaintenance,
@@ -1636,5 +1643,181 @@ test('Ocupantes de casas, comercios, banco, comisaría y cárcel generan iconos 
   assert.equal(fisherBadge, undefined, 'El pescador del Muelle debe permanecer visible pescando');
   assert.equal(snap.insideAgentIds.has(fisher.id), false);
 });
+
+test('Hitboxes sólidas separan aldeanos (adultos, ancianos y niños) sin mover ocupantes dentro de casas', () => {
+  const state = createInitialState();
+  state.speed = 1;
+  state.petitionTimerSec = 99999;
+  state.minute = NIGHT_START_MINUTE + 60;
+
+  const adult = state.agents[0];
+  const elder = state.agents[1];
+  const child = createAgent(950, 'NinoPrueba', 'M', 720, 650, null, 7);
+  child.isChild = true;
+  state.agents.push(child);
+
+  adult.isChild = false;
+  adult.ageYears = 25;
+  elder.isChild = false;
+  elder.ageYears = 68;
+
+  // Colocar a adulto, anciano y niño encimados en la misma coordenada
+  adult.x = 720;
+  adult.y = 650;
+  elder.x = 720;
+  elder.y = 650;
+  child.x = 721;
+  child.y = 650;
+  adult.taskType = 'idle';
+  elder.taskType = 'idle';
+  child.taskType = 'idle';
+  adult.taskTimer = 10;
+  elder.taskTimer = 10;
+  child.taskTimer = 10;
+
+  // Y un ocupante durmiendo dentro de casa que debe permanecer dentro
+  const house = createHouseNearCenter(state, 'Refugio', 'south', 'small', 600, 650);
+  const sleeper = state.agents[2];
+  sleeper.houseId = house.id;
+  sleeper.taskType = 'sleep';
+  sleeper.energy = 25;
+  sleeper.taskTimer = 30;
+  sleeper.x = house.x;
+  sleeper.y = house.y + 12;
+
+  for (let i = 0; i < 6; i++) {
+    tickSimulation(state, 0.1);
+  }
+
+  const distAdultElder = Math.hypot(adult.x - elder.x, adult.y - elder.y);
+  const distAdultChild = Math.hypot(adult.x - child.x, adult.y - child.y);
+  const distElderChild = Math.hypot(elder.x - child.x, elder.y - child.y);
+  assert.ok(distAdultElder >= 12, `Adulto y anciano deben separarse (dist=${distAdultElder})`);
+  assert.ok(distAdultChild >= 10, `Adulto y niño deben separarse (dist=${distAdultChild})`);
+  assert.ok(distElderChild >= 10, `Anciano y niño deben separarse (dist=${distElderChild})`);
+  assert.equal(Math.hypot(sleeper.x - house.x, sleeper.y - (house.y + 12)) < 1, true);
+});
+
+test('Zonas estrictas de recursos (bosque/montaña), exclusión de puente/caminos/casas y fauna fuera de obstáculos', () => {
+  const state = createInitialState();
+
+  // Todos los recursos iniciales respetan bosque/montaña y no caen en agua ni puente
+  for (const r of state.resources) {
+    assert.equal(isPointInRiverOrBridge(r.y), false, `Recurso ${r.type} no debe estar en río/puente`);
+    if (r.type === 'stone' || r.type === 'copper' || r.type === 'iron' || r.type === 'silver' || r.type === 'gold') {
+      assert.ok(r.x >= MOUNTAIN_MIN_X, `Mineral ${r.type} debe iniciar en montañas (x=${r.x})`);
+    } else if (
+      r.type === 'wood' ||
+      r.type === 'pine_wood' ||
+      r.type === 'maple_wood' ||
+      r.type === 'oak_wood' ||
+      r.type === 'food'
+    ) {
+      assert.ok(r.x <= FOREST_MAX_X, `Recurso forestal ${r.type} debe iniciar en bosque (x=${r.x})`);
+    }
+  }
+
+  // Crear plaza, puente, casa, edificio especial y camino y forzar spawn encima de ellos
+  const plaza = createPlaza(state, 'Mateo');
+  const bridge = createBridge(state, 'Lucas');
+  const house = createHouseNearCenter(state, 'Mateo', 'south', 'medium', 720, 620);
+  state.agents[0].inv.wood = 25;
+  state.agents[0].inv.stone = 25;
+  const bank = createSpecialBuilding(state, 'bank', 'Mateo', 860, 620)!;
+  assert.ok(plaza && bridge && bank);
+  state.agents[0].inv.wood = 10;
+  const road = addRoadTile(state, 180, 300, 'dirt', false, state.agents[0]);
+  assert.ok(road);
+
+  // Intentar spawnear madera/comida en el centro y minerales en el bosque o encima del puente/plaza/camino
+  spawnResource(state, 'food', plaza.x, plaza.y, true);
+  spawnResource(state, 'oak_wood', road!.x, road!.y, true);
+  spawnResource(state, 'iron', bridge.x, RIVER_TOP_Y + 20, true);
+  spawnResource(state, 'gold', 150, 250, true);
+  spawnResource(state, 'stone', house.x, house.y, true);
+
+  const injected = state.resources.slice(-5);
+  for (const r of injected) {
+    assert.equal(isPointBlockedForResource(state, r.x, r.y, 6), false, `Recurso ${r.type} quedó bloqueado`);
+    assert.equal(isPointOnRoad(state, r.x, r.y, 2), false, `Recurso ${r.type} no debe quedar sobre camino`);
+    if (r.type === 'food' || r.type === 'oak_wood') {
+      assert.ok(r.x <= FOREST_MAX_X, `${r.type} debe reubicarse dentro del bosque (x=${r.x})`);
+    } else {
+      assert.ok(r.x >= MOUNTAIN_MIN_X, `${r.type} debe reubicarse dentro de la montaña (x=${r.x})`);
+    }
+  }
+
+  // Reubicación automática de recursos/animales mal ubicados (por ejemplo tras construir o cargar partida)
+  state.resources.push({
+    id: 9991,
+    type: 'copper',
+    x: 700,
+    y: 620,
+    amount: 4,
+    maxAmount: 4,
+    depleted: false,
+    restTimer: 0,
+  });
+  const rogueCow = createAnimal(state, 'cow', plaza.x, plaza.y);
+  assert.equal(isPointBlockedForAnimal(state, rogueCow.x, rogueCow.y, 6), false);
+
+  rogueCow.x = bridge.x;
+  rogueCow.y = RIVER_TOP_Y + 24;
+  relocateBlockedResourcesAndAnimals(state);
+
+  const fixedCopper = state.resources.find((r) => r.id === 9991)!;
+  assert.ok(fixedCopper.x >= MOUNTAIN_MIN_X);
+  assert.equal(isPointBlockedForAnimal(state, rogueCow.x, rogueCow.y, 6), false);
+});
+
+test('Caminos funcionales conectados puerta a puerta sin tramos aislados ni solapados sobre edificios', () => {
+  const state = createInitialState();
+  state.agents[0].job = 'Constructor';
+  state.agents[0].inv.wood = 200;
+  state.agents[0].inv.stone = 100;
+
+  const plaza = createPlaza(state, 'Mateo');
+  const bridge = createBridge(state, 'Lucas');
+  const h1 = createHouseNearCenter(state, 'Elena', 'south', 'medium', 560, 620);
+  const h2 = createHouseNearCenter(state, 'Mateo', 'north', 'small', 720, 340);
+  const market = createSpecialBuilding(state, 'market', 'Sofia', 860, 640)!;
+  assert.ok(plaza && bridge && market);
+
+  const builtCount = buildBaseRoads(state, 'dirt', false, state.agents[0]);
+  assert.ok(builtCount >= 8, `Deben trazarse caminos útiles conectando estructuras (built=${builtCount})`);
+
+  // Ninguna baldosa debe caer dentro de una casa/edificio/plaza ni en el agua
+  const bridgeX = state.bridge!.x;
+  for (const tile of state.roads) {
+    assert.equal(isPointInRiverWater(tile.x, tile.y, bridgeX), false);
+    assert.equal(isPointBlockedByStructures(state, tile.x, tile.y, 0, true), false);
+    // Cada baldosa debe tener al menos un vecino ortogonal directo (4-conectado) para no dejar tramos sueltos
+    const hasOrthogonalNeighbor = state.roads.some(
+      (other) =>
+        other.id !== tile.id &&
+        Math.abs(other.x - tile.x) + Math.abs(other.y - tile.y) === ROAD_GRID_SIZE
+    );
+    assert.equal(
+      hasOrthogonalNeighbor,
+      true,
+      `Baldosa en (${tile.x},${tile.y}) quedó aislada sin conexión ortogonal`
+    );
+  }
+
+  // Nueva casa sin conectar debe generar un segmento útil contiguo mediante findNextUsefulRoadSegment
+  const h3 = createHouseNearCenter(state, 'Nuevo', 'south', 'small', 500, 740);
+  assert.ok(h3);
+  const nextSegment = findNextUsefulRoadSegment(state);
+  if (!nextSegment || nextSegment.length < 2) {
+    assert.fail('Debe proponer un tramo conectado hacia la nueva casa');
+  }
+  for (let i = 1; i < nextSegment.length; i++) {
+    const manhattan: number =
+      Math.abs(nextSegment[i].x - nextSegment[i - 1].x) +
+      Math.abs(nextSegment[i].y - nextSegment[i - 1].y);
+    assert.equal(manhattan, ROAD_GRID_SIZE, 'Cada paso del camino propuesto debe ser ortogonal contiguo');
+  }
+});
+
 
 

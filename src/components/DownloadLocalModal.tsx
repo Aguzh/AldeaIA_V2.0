@@ -65,7 +65,7 @@ export function DownloadLocalModal({ onClose }: DownloadLocalModalProps) {
             <span className="text-[11px] text-slate-400">Sin instalar nada</span>
           </div>
           <p className="text-xs text-slate-300 leading-relaxed">
-            Descarga un único archivo <code className="font-mono text-slate-100">aldea-ia-local.html</code> con toda la aplicación compilada adentro. Guardalo en tu PC y abrilo con doble clic en Chrome o Edge.
+            Descarga un único archivo <code className="font-mono text-slate-100">aldea-ia-local.html</code> con toda la aplicación y todas las hojas de sprites compiladas adentro. Guardalo en tu PC y abrilo con doble clic en Chrome o Edge.
           </p>
           <button
             type="button"
@@ -88,7 +88,7 @@ export function DownloadLocalModal({ onClose }: DownloadLocalModalProps) {
             <span className="text-[11px] text-slate-400">Con lanzador local</span>
           </div>
           <p className="text-xs text-slate-300 leading-relaxed">
-            Incluye el código fuente completo (<code className="font-mono text-slate-100">src/</code>, <code className="font-mono text-slate-100">server.ts</code>, <code className="font-mono text-slate-100">package.json</code>), lanzadores directos (<code className="font-mono text-slate-100">INICIAR_WINDOWS.bat</code> y <code className="font-mono text-slate-100">iniciar.sh</code>) y <code className="font-mono text-slate-100">ALDEA_IA_PORTABLE.html</code>. Descomprimí el ZIP antes de ejecutar.
+            Incluye el código fuente completo (<code className="font-mono text-slate-100">src/</code>, <code className="font-mono text-slate-100">public/assets/sprites/</code>, <code className="font-mono text-slate-100">server.ts</code>, <code className="font-mono text-slate-100">package.json</code>), lanzadores directos (<code className="font-mono text-slate-100">INICIAR_WINDOWS.bat</code> y <code className="font-mono text-slate-100">iniciar.sh</code>) y <code className="font-mono text-slate-100">ALDEA_IA_PORTABLE.html</code>. Descomprimí el ZIP antes de ejecutar.
           </p>
           <button
             type="button"

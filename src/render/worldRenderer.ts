@@ -28,10 +28,12 @@ import {
 import {
   drawBiomeTerrain,
   drawBridge,
+  drawDistrictMarkers,
   drawRiverFish,
   drawRiverWater,
   drawRoads,
 } from './terrainAndWater';
+import { preloadAllSpriteSheets } from './spriteLoader';
 import { drawWildlifeAnimals } from './wildlife';
 
 export interface CameraView {
@@ -42,7 +44,7 @@ export interface CameraView {
 
 /**
  * Coordinador principal de capas visuales del mundo en estética pixel-art 16-bit nítida:
- * terreno (biomas y caminos) -> río -> peces -> puente -> cultivos/edificios/ocupantes -> naturaleza ->
+ * terreno (biomas, distritos y caminos) -> río -> peces -> puente -> cultivos/edificios/ocupantes -> naturaleza ->
  * animales -> aldeanos adultos/niños visibles -> efectos (fuego, clima, iluminación y flotantes).
  */
 export function renderWorldScene(
@@ -50,6 +52,7 @@ export function renderWorldScene(
   state: SimulationState,
   camera: CameraView = { zoom: 1, panX: 0, panY: 0 }
 ): void {
+  preloadAllSpriteSheets();
   ctx.imageSmoothingEnabled = false;
   const isNight = isNightMinute(state.minute);
   const animPhase = (typeof performance !== 'undefined' ? performance.now() : Date.now()) * 0.002;
@@ -66,22 +69,23 @@ export function renderWorldScene(
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
   ctx.save();
-  ctx.translate(CANVAS_WIDTH / 2 + camera.panX, CANVAS_HEIGHT / 2 + camera.panY);
+  ctx.translate(Math.round(CANVAS_WIDTH / 2 + camera.panX), Math.round(CANVAS_HEIGHT / 2 + camera.panY));
   ctx.scale(camera.zoom, camera.zoom);
-  ctx.translate(-CANVAS_WIDTH / 2, -CANVAS_HEIGHT / 2);
+  ctx.translate(-Math.round(CANVAS_WIDTH / 2), -Math.round(CANVAS_HEIGHT / 2));
 
   ctx.beginPath();
   ctx.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
   ctx.clip();
 
-  // 1. Terreno (biomas, zonas laterales y caminos)
+  // 1. Terreno (biomas, zonas laterales, distritos emergentes y caminos)
   drawBiomeTerrain(ctx, state.biome, state.season);
+  drawDistrictMarkers(ctx, state.districts ?? []);
   drawRoads(ctx, state.roads);
 
   // 2. Río -> 3. Peces -> 4. Puente (los peces siempre nadan por debajo del puente)
   drawRiverWater(ctx, state.minute, state.season, animPhase);
   drawRiverFish(ctx, state.animals, state.selectedEntity, animPhase);
-  drawBridge(ctx, state.bridge, state.selectedEntity?.kind === 'bridge');
+  drawBridge(ctx, state.bridge, state.selectedEntity?.kind === 'bridge', state.era);
 
   // 5. Cultivos, plaza, casas, edificios especiales, cabezas de ocupantes y naturaleza
   drawBuildingsAndFarms(

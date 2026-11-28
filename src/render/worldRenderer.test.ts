@@ -273,3 +273,28 @@ test('16-bit sprite modules (adultVillagers, childVillagers, wildlife, occupant 
   );
 });
 
+test('spriteLoader gracefully falls back to null in Node without Image/DOM and connected roads snap to integer grid', async () => {
+  const { getCutoutSprite, getSpriteSheetCanvas, resetSpriteLoaderCachesForTest } = await import('./spriteLoader');
+  const { ROAD_GRID_SIZE } = await import('../simulation/rules');
+
+  resetSpriteLoaderCachesForTest();
+  assert.equal(getSpriteSheetCanvas('terrain'), null);
+  assert.equal(getCutoutSprite('buildings', 20, 8, 83, 109), null);
+  assert.equal(getCutoutSprite('adults', 37, 17, 61, 105), null);
+  assert.equal(getCutoutSprite('children', 71, 56, 89, 170), null);
+
+  const { ctx, ops } = createMockCanvasContext();
+  drawRoads(ctx, [
+    { id: 1, x: 400.2, y: 300.4, roadType: 'dirt', lit: true, hasLamp: true, durability: 100 },
+    { id: 2, x: 400.2 + ROAD_GRID_SIZE, y: 300.4, roadType: 'dirt', lit: false, hasLamp: false, durability: 100 },
+    { id: 3, x: 400.2, y: 300.4 + ROAD_GRID_SIZE, roadType: 'stone', lit: false, hasLamp: false, durability: 100 },
+    { id: 4, x: 400.2 + ROAD_GRID_SIZE, y: 300.4 + ROAD_GRID_SIZE, roadType: 'reinforced', lit: true, hasLamp: true, durability: 100 },
+  ]);
+
+  const rectOps = ops.filter((o) => o.op === 'fillRect' || o.op === 'strokeRect');
+  assert.ok(rectOps.length > 10);
+  const nonIntegerRects = rectOps.filter((o) => o.args.some((v) => !Number.isInteger(v)));
+  assert.equal(nonIntegerRects.length, 0);
+});
+
+

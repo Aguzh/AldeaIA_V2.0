@@ -417,6 +417,13 @@ export interface Agent {
   reproductionCooldown: number;
   moodModifier: number;
   activeConstruction?: ActiveConstruction | null;
+  familyId?: string;
+  motherId?: number | null;
+  fatherId?: number | null;
+  birthDay?: number;
+  jobsHeld?: JobType[];
+  discoveriesAuthored?: string[];
+  knownDiscoveries?: string[];
 }
 
 export interface House {
@@ -657,11 +664,26 @@ export interface RepresentativeGoals {
   lastUpdatedDay: number;
 }
 
+export type ChronicleCategory =
+  | 'natural'
+  | 'divine'
+  | 'politics'
+  | 'economy'
+  | 'crisis'
+  | 'social'
+  | 'family'
+  | 'technology'
+  | 'culture'
+  | 'environment'
+  | 'health'
+  | 'architecture'
+  | 'diplomacy';
+
 export interface ChronicleArchiveEntry {
   id: number;
   day: number;
   year: number;
-  category: 'natural' | 'divine' | 'politics' | 'economy' | 'crisis';
+  category: ChronicleCategory;
   text: string;
 }
 
@@ -672,6 +694,263 @@ export interface MilestoneStatus {
   achieved: boolean;
   achievedDay: number | null;
   origin: 'natural' | 'mixed' | 'divine';
+}
+
+export type FamilyInfluenceTier = 'emergente' | 'consolidada' | 'influyente' | 'histórica';
+
+export interface FamilyLineage {
+  id: string;
+  surname: string;
+  founderIds: number[];
+  founderNames: string[];
+  foundedDay: number;
+  currentGeneration: number;
+  livingMemberIds: number[];
+  historicalMemberIds: number[];
+  totalDescendants: number;
+  predominantJobs: JobType[];
+  totalCoins: number;
+  influenceScore: number;
+  influenceTier: FamilyInfluenceTier;
+  notableEvents: string[];
+}
+
+export interface HistoricalFigure {
+  id: number;
+  agentId: number;
+  name: string;
+  familyId?: string;
+  generation: number;
+  birthDay: number;
+  deathDay: number | null;
+  roleTitle: string;
+  reason: string;
+  era: EraId;
+  job: JobType;
+  achievements: string[];
+}
+
+export type TraditionOrigin =
+  | 'harvest'
+  | 'founding'
+  | 'figure'
+  | 'epidemic'
+  | 'construction'
+  | 'nature'
+  | 'divine';
+
+export interface CulturalTradition {
+  id: string;
+  name: string;
+  description: string;
+  origin: TraditionOrigin;
+  foundedDay: number;
+  generationBorn: number;
+  intervalDays: number;
+  lastCelebratedDay: number | null;
+  foodCost: number;
+  coinCost: number;
+  happinessBonus: number;
+  tradeBonus: number;
+  socialBonus: number;
+  status: 'active' | 'abandoned';
+  celebrationsCount: number;
+}
+
+export interface CulturalFestival {
+  id: number;
+  traditionId: string;
+  name: string;
+  dayStarted: number;
+  daysRemaining: number;
+  foodSpent: number;
+  coinsSpent: number;
+  attendanceCount: number;
+}
+
+export interface CulturalBelief {
+  id: string;
+  name: string;
+  description: string;
+  originEvent: string;
+  foundedDay: number;
+  adoptionPct: number;
+}
+
+export interface CultureState {
+  traditions: CulturalTradition[];
+  activeFestival: CulturalFestival | null;
+  beliefs: CulturalBelief[];
+  identityTag: string;
+}
+
+export type DiscoveryCategory =
+  | 'agricultura'
+  | 'oficio'
+  | 'medicina'
+  | 'economia'
+  | 'ingenieria'
+  | 'sociedad';
+
+export interface DiscoveryRecord {
+  id: string;
+  name: string;
+  era: EraId;
+  category: DiscoveryCategory;
+  description: string;
+  requirementsSummary: string;
+  benefitsSummary: string;
+  costTradeoffSummary: string;
+  authorId: number | null;
+  authorName: string;
+  authorJob: JobType | 'Aldea';
+  discoveredDay: number;
+  knownByAgentIds: number[];
+  diffusionPct: number;
+  status: 'emergent' | 'diffused';
+}
+
+export type DiplomaticRelation = 'desconocidos' | 'neutrales' | 'comerciales' | 'aliados' | 'hostiles';
+
+export type TradeGoodKey = 'food' | 'wood' | 'stone' | 'copper' | 'iron' | 'tools' | 'medicine' | 'bread';
+
+export interface ExternalCommunity {
+  id: string;
+  name: string;
+  populationApprox: number;
+  era: EraId;
+  biome: BiomeType;
+  distanceKm: number;
+  direction: 'Norte' | 'Sur' | 'Este' | 'Oeste';
+  resources: Partial<Record<TradeGoodKey, number>>;
+  needs: TradeGoodKey[];
+  coinReserve: number;
+  relation: DiplomaticRelation;
+  trust: number;
+  lastContactDay: number | null;
+  tradeAgreements: number;
+  knowledgeShared: number;
+}
+
+export interface ExternalTradeRecord {
+  id: number;
+  day: number;
+  communityId: string;
+  communityName: string;
+  kind: 'import' | 'export' | 'knowledge' | 'diplomacy';
+  good?: TradeGoodKey;
+  amount: number;
+  coinsDelta: number;
+  summary: string;
+}
+
+export type SystemicCrisisKind =
+  | 'drought'
+  | 'frost'
+  | 'flood'
+  | 'blight'
+  | 'famine_risk'
+  | 'epidemic'
+  | 'mine_collapse'
+  | 'material_scarcity';
+
+export interface ActiveSystemicCrisis {
+  id: string;
+  kind: SystemicCrisisKind;
+  title: string;
+  severity: number; // 0..100
+  daysActive: number;
+  mitigationScore: number; // 0..100
+  causeChain: string;
+  mitigatedBy: string[];
+}
+
+export interface CrisisMonitorState {
+  activeCrises: ActiveSystemicCrisis[];
+  foodReserveDays: number;
+  droughtStreakDays: number;
+  scarcityAlert: boolean;
+  epidemicAlert: boolean;
+  lastEvaluationDay: number;
+}
+
+export type DistrictKind = 'residencial' | 'comercial' | 'industrial' | 'agricola' | 'civico';
+
+export interface DistrictZone {
+  id: string;
+  kind: DistrictKind;
+  label: string;
+  x: number;
+  y: number;
+  radius: number;
+  buildingCount: number;
+}
+
+export interface SocietyIndicators {
+  happiness: number;
+  security: number;
+  governmentTrust: number;
+  qualityOfLife: number;
+  economicInequality: number;
+  educationAccess: number;
+  healthcareAccess: number;
+  socialStability: number;
+  migrationPull: number;
+}
+
+export interface SocietyHistoryPoint {
+  day: number;
+  qualityOfLife: number;
+  happiness: number;
+  security: number;
+  governmentTrust: number;
+  economicInequality: number;
+}
+
+export interface AgentBiography {
+  agentId: number;
+  name: string;
+  familyId?: string;
+  generation: number;
+  birthDay: number;
+  deathDay: number | null;
+  alive: boolean;
+  primaryJob: JobType;
+  jobsHeld: JobType[];
+  keySkills: string[];
+  discoveries: string[];
+  spouseNames: string[];
+  childrenCount: number;
+  notableDeeds: string[];
+  isHistoricalFigure: boolean;
+}
+
+export interface DecadeSummary {
+  decadeNumber: number;
+  startYear: number;
+  endYear: number;
+  startDay: number;
+  endDay: number;
+  populationStart: number;
+  populationEnd: number;
+  births: number;
+  deaths: number;
+  constructions: number;
+  discoveriesCount: number;
+  festivalsCount: number;
+  crisesCount: number;
+  summaryText: string;
+  aiNarrated?: boolean;
+}
+
+export interface EnginePerformanceStats {
+  lastTickMs: number;
+  avgTickMs: number;
+  activeAgents: number;
+  offscreenAgents: number;
+  lodTier: 'full' | 'balanced' | 'high_pop';
+  eventsProcessed: number;
+  dailyAggregateMs: number;
 }
 
 export type SelectedEntity =
@@ -766,6 +1045,19 @@ export interface SimulationState {
   qwenMessages: QwenMessage[];
   floatingEffects: FloatingEffect[];
   pendingSounds?: SoundCue[];
+  familyLineages?: FamilyLineage[];
+  historicalFigures?: HistoricalFigure[];
+  culture?: CultureState;
+  discoveries?: DiscoveryRecord[];
+  externalCommunities?: ExternalCommunity[];
+  externalTradeHistory?: ExternalTradeRecord[];
+  crisisMonitor?: CrisisMonitorState;
+  districts?: DistrictZone[];
+  societyIndicators?: SocietyIndicators;
+  societyHistory?: SocietyHistoryPoint[];
+  biographies?: AgentBiography[];
+  decadeSummaries?: DecadeSummary[];
+  perfStats?: EnginePerformanceStats;
 }
 
 export type QwenAction =
@@ -835,7 +1127,16 @@ export type QwenAction =
       hairStyle?: Agent['hairStyle'];
       hairColor?: string;
       skin?: string;
-    };
+    }
+  | { type: 'DECLARE_FESTIVAL'; traditionName?: string }
+  | {
+      type: 'DIPLOMATIC_TRADE';
+      communityId?: string;
+      kind?: 'import' | 'export' | 'knowledge';
+      good?: TradeGoodKey;
+      amount?: number;
+    }
+  | { type: 'MITIGATE_CRISIS' };
 
 export interface BuildingOccupantBadge {
   agentId: number;
